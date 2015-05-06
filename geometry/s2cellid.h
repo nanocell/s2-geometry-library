@@ -58,11 +58,11 @@ class S2CellId {
   // Although only 60 bits are needed to represent the index of a leaf
   // cell, we need an extra bit in order to represent the position of
   // the center of the leaf cell along the Hilbert curve.
-  static int const kFaceBits = 3;
-  static int const kNumFaces = 6;
-  static int const kMaxLevel = S2::kMaxCellLevel;  // Valid levels: 0..kMaxLevel
-  static int const kPosBits = 2 * kMaxLevel + 1;
-  static int const kMaxSize = 1 << kMaxLevel;
+  static int const kFaceBits; // = 3;
+  static int const kNumFaces; // = 6;
+  static int const kMaxLevel;  // = S2::kMaxCellLevel;  // Valid levels: 0..kMaxLevel
+  static int const kPosBits;  // = 2 * kMaxLevel + 1;
+  static int const kMaxSize;  // = 1 << kMaxLevel;
 
   inline explicit S2CellId(uint64 id) : id_(id) {}
 
@@ -239,6 +239,9 @@ class S2CellId {
   // Creates a debug human readable string. Used for << and available for direct
   // usage as well.
   string ToString() const;
+  string toString() const { return ToString(); }
+  string slowToString() const;
+  static S2CellId FromString(const string& str);
 
   // Return the four cells that are adjacent across the cell's four edges.
   // Neighbors are returned in the order defined by S2Cell::GetEdge.  All
@@ -281,7 +284,10 @@ class S2CellId {
   // equal to (uint64(1) << (2 * (kMaxLevel - level))).  So for example,
   // a.lsb() <= b.lsb() if and only if a.level() >= b.level(), but the
   // first test is more efficient.
+#pragma warning(push)
+#pragma warning( disable: 4146 )
   uint64 lsb() const { return id_ & -id_; }
+#pragma warning(pop)
 
   // Return the lowest-numbered bit that is on for cells at the given level.
   inline static uint64 lsb_for_level(int level) {
@@ -291,7 +297,7 @@ class S2CellId {
  private:
   // This is the offset required to wrap around from the beginning of the
   // Hilbert curve to the end or vice versa; see next_wrap() and prev_wrap().
-  static uint64 const kWrapOffset = uint64(kNumFaces) << kPosBits;
+  static uint64 const kWrapOffset;  // = uint64(kNumFaces) << kPosBits;
 
   // Return the i- or j-index of the leaf cell containing the given
   // s- or t-value.  Values are clamped appropriately.
@@ -406,14 +412,20 @@ inline S2CellId S2CellId::parent(int level) const {
   DCHECK_GE(level, 0);
   DCHECK_LE(level, this->level());
   uint64 new_lsb = lsb_for_level(level);
+#pragma warning(push)
+#pragma warning( disable: 4146 )
   return S2CellId((id_ & -new_lsb) | new_lsb);
+#pragma warning(pop)
 }
 
 inline S2CellId S2CellId::parent() const {
   DCHECK(is_valid());
   DCHECK(!is_face());
   uint64 new_lsb = lsb() << 2;
+#pragma warning(push)
+#pragma warning( disable: 4146 )
   return S2CellId((id_ & -new_lsb) | new_lsb);
+#pragma warning(pop)
 }
 
 inline S2CellId S2CellId::child(int position) const {
@@ -487,20 +499,12 @@ inline S2CellId S2CellId::End(int level) {
 
 ostream& operator<<(ostream& os, S2CellId const& id);
 
-#ifndef SWIG
-#include<hash_set>
-namespace __gnu_cxx {
-
-
+HASH_NAMESPACE_START
 template<> struct hash<S2CellId> {
   size_t operator()(S2CellId const& id) const {
     return static_cast<size_t>(id.id() >> 32) + static_cast<size_t>(id.id());
   }
 };
-
-
-}  // namespace __gnu_cxx
-
-#endif  // SWIG
+HASH_NAMESPACE_END
 
 #endif  // UTIL_GEOMETRY_S2CELLID_H_

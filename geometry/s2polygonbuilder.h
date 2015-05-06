@@ -3,8 +3,8 @@
 #ifndef UTIL_GEOMETRY_S2POLYGONBUILDER_H__
 #define UTIL_GEOMETRY_S2POLYGONBUILDER_H__
 
-#include <hash_map>
-using __gnu_cxx::hash_map;
+#include "base/definer.h"
+#include "hash.h"
 
 #include <set>
 using std::set;
@@ -17,8 +17,9 @@ using std::make_pair;
 #include <vector>
 using std::vector;
 
+#include <boost/scoped_ptr.hpp>
+using boost::scoped_ptr;
 #include "base/basictypes.h"
-#include "base/scoped_ptr.h"
 #include "s2.h"
 #include "s1angle.h"
 #include "util/math/matrix3x3.h"

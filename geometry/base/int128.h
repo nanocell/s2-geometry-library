@@ -10,8 +10,8 @@ using std::ostream;
 using std::cout;
 using std::endl;
 
-#include "base/integral_types.h"
-#include "base/logging.h"
+#include "integral_types.h"
+#include "logging.h"
 
 // An unsigned 128-bit integer type. Thread-compatible.
 class uint128 {

@@ -9,9 +9,16 @@ using std::max;
 using std::swap;
 using std::reverse;
 
-#include <hash_map>
-using __gnu_cxx::hash_map;
-  // To have template struct hash<T> defined
+#include "base/definer.h"
+
+#ifdef OS_WINDOWS
+#define _USE_MATH_DEFINES
+#include <cmath>
+#endif
+
+#include "hash.h"
+
+// To have template struct hash<T> defined
 #include "base/basictypes.h"
 #include "base/logging.h"
 #include "base/macros.h"
@@ -19,24 +26,22 @@ using __gnu_cxx::hash_map;
 #include "util/math/vector3-inl.h"
 #include "util/math/matrix3x3.h"
 
+
 // An S2Point represents a point on the unit sphere as a 3D vector.  Usually
 // points are normalized to be unit length, but some methods do not require
 // this.  See util/math/vector3-inl.h for the methods available.  Among other
 // things, there are overloaded operators that make it convenient to write
 // arithmetic expressions (e.g. (1-x)*p1 + x*p2).
+
 typedef Vector3_d S2Point;
 
-#include<hash_set>
-namespace __gnu_cxx {
-
+HASH_NAMESPACE_START
 
 template<> struct hash<S2Point> {
+public:
   size_t operator()(S2Point const& p) const;
 };
-
-
-}  // namespace __gnu_cxx
-
+HASH_NAMESPACE_END
 
 // The S2 class is simply a namespace for constants and static utility
 // functions related to spherical geometry, such as area calculations and edge
@@ -64,6 +69,7 @@ template<> struct hash<S2Point> {
 //
 class S2 {
  public:
+  static const bool debug;
   // Return a unique "origin" on the sphere for operations that need a fixed
   // reference point.  In particular, this is the "point at infinity" used for
   // point-in-polygon testing (by counting the number of edge crossings).
@@ -342,11 +348,6 @@ class S2 {
   // Note that the (i, j), (s, t), (si, ti), and (u, v) coordinate systems are
   // right-handed on all six faces.
 
-  // This is the number of levels needed to specify a leaf cell. This
-  // constant is defined here so that the S2::Metric class can be
-  // implemented without including s2cellid.h.
-  static int const kMaxCellLevel = 30;
-
   // Convert an s or t value  to the corresponding u or v value.  This is
   // a non-linear transformation from [-1,1] to [-1,1] that attempts to
   // make the cell sizes more uniform.
@@ -399,8 +400,13 @@ class S2 {
   // 'kInvertMask' is true, then the traversal order is rotated by 180
   // degrees (i.e. the bits of i and j are inverted, or equivalently,
   // the axis directions are reversed).
-  static int const kSwapMask = 0x01;
-  static int const kInvertMask = 0x02;
+  static int const kSwapMask;
+  static int const kInvertMask;
+
+  // This is the number of levels needed to specify a leaf cell. This
+  // constant is defined here so that the S2::Metric class can be
+  // implemented without including s2cellid.h.
+  static int const kMaxCellLevel;
 
   // kIJtoPos[orientation][ij] -> pos
   //

@@ -7,8 +7,7 @@ using std::multiset;
 #include <vector>
 using std::vector;
 
-// Removed this dependency on GFlags
-// #include "base/commandlineflags.h"
+#include "s2.h"
 #include "base/logging.h"
 #include "util/math/matrix3x3-inl.h"
 #include "s2polyline.h"
@@ -19,9 +18,8 @@ using std::vector;
 #include "s2latlng.h"
 #include "s2edgeutil.h"
 
-// Removed this dependency on GFlags
-// DECLARE_bool(s2debug);  // defined in s2.cc
-static bool FLAGS_s2debug;
+#include "mongo/util/mongoutils/str.h"
+using mongoutils::str::stream;
 
 static const unsigned char kCurrentEncodingVersionNumber = 1;
 
@@ -47,7 +45,9 @@ S2Polyline::~S2Polyline() {
 }
 
 void S2Polyline::Init(vector<S2Point> const& vertices) {
-  if (FLAGS_s2debug) CHECK(IsValid(vertices));
+  if (S2::debug) {
+      CHECK(IsValid(vertices));
+  }
 
   delete[] vertices_;
   num_vertices_ = vertices.size();
@@ -65,18 +65,21 @@ void S2Polyline::Init(vector<S2LatLng> const& vertices) {
   for (int i = 0; i < num_vertices_; ++i) {
     vertices_[i] = vertices[i].ToPoint();
   }
-  if (FLAGS_s2debug) {
+  if (S2::debug) {
     vector<S2Point> vertex_vector(vertices_, vertices_ + num_vertices_);
     CHECK(IsValid(vertex_vector));
   }
 }
 
-bool S2Polyline::IsValid(vector<S2Point> const& v) {
+bool S2Polyline::IsValid(vector<S2Point> const& v, string* err) {
   // All vertices must be unit length.
   int n = v.size();
   for (int i = 0; i < n; ++i) {
     if (!S2::IsUnitLength(v[i])) {
-      LOG(INFO) << "Vertex " << i << " is not unit length";
+      S2LOG(INFO) << "Vertex " << i << " is not unit length";
+      if (err) {
+        *err = stream() << "Vertex " << i << " is not unit length";
+      }
       return false;
     }
   }
@@ -84,8 +87,12 @@ bool S2Polyline::IsValid(vector<S2Point> const& v) {
   // Adjacent vertices must not be identical or antipodal.
   for (int i = 1; i < n; ++i) {
     if (v[i-1] == v[i] || v[i-1] == -v[i]) {
-      LOG(INFO) << "Vertices " << (i - 1) << " and " << i
+      S2LOG(INFO) << "Vertices " << (i - 1) << " and " << i
                 << " are identical or antipodal";
+      if (err) {
+        *err = stream() << "Vertices " << (i - 1) << " and " << i
+                        << " are identical or antipodal";
+      }
       return false;
     }
   }
@@ -324,7 +331,7 @@ bool S2Polyline::Decode(Decoder* const decoder) {
   vertices_ = new S2Point[num_vertices_];
   decoder->getn(vertices_, num_vertices_ * sizeof(*vertices_));
 
-  if (FLAGS_s2debug) {
+  if (S2::debug) {
     vector<S2Point> vertex_vector(vertices_, vertices_ + num_vertices_);
     CHECK(IsValid(vertex_vector));
   }

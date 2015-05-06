@@ -19,7 +19,9 @@
 #ifndef BASE_STL_DECL_H_
 #define BASE_STL_DECL_H_
 
-#if defined(STL_MSVC)  /* If VC++'s STL */
+#include "base/definer.h"
+
+#if defined(OS_WINDOWS)  /* If VC++'s STL */
 #include "base/stl_decl_msvc.h"
 
 #elif defined(__APPLE__) && defined(OS_MACOSX) /* gcc with a twist */

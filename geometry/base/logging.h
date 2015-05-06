@@ -57,6 +57,12 @@ using std::endl;
 #define LOG_FATAL LogMessageFatal(__FILE__, __LINE__)
 #define LOG_QFATAL LOG_FATAL
 
+#define INFO LogMessageInfo().stream()
+#define FATAL LogMessageFatal(__FILE__, __LINE__).stream()
+#define DFATAL LogMessageFatal(__FILE__, __LINE__).stream()
+
+#define S2LOG(x) x
+
 #define VLOG(x) if((x)>0){} else LOG_INFO.stream()
 
 #ifdef NDEBUG

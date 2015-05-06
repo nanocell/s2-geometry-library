@@ -1,13 +1,17 @@
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 find_package(PythonLibs)
 find_package(Boost 1.58.0 COMPONENTS python3)
 find_package(OpenSSL)
 
-include_directories(./geometry)
+include_directories(
+	./geometry
+	./thirdparty
+)
 
 add_definitions(-DNDEBUG -DS2_USE_EXACTFLOAT -DARCH_K8)
+set(CMAKE_CXX_FLAGS "-std=c++0x")
 
 add_library(google_util_geometry_s2cellid 
 	SHARED
@@ -47,7 +51,7 @@ add_library(google_util_geometry_s2
 
 add_library(google_util_math SHARED
 	geometry/util/math/mathutil.cc
-	geometry/util/math/mathlimits.cc
+	# geometry/util/math/mathlimits.cc
 	geometry/util/math/exactfloat/exactfloat.cc
 )
 
@@ -98,6 +102,7 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND)
 		${geometry_s2_py_cpp}
 	)
 	set_target_properties(geometry_s2 PROPERTIES PREFIX "")
+
 	target_link_libraries(geometry_s2 
 		${PYTHON_LIBRARIES} 
 		${Boost_LIBRARIES} 

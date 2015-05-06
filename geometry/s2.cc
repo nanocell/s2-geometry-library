@@ -2,8 +2,6 @@
 
 #include "s2.h"
 
-//Removed this dependency on GFLags
-//#include "base/commandlineflags.h"
 #include "base/integral_types.h"
 #include "base/logging.h"
 #include "util/math/matrix3x3-inl.h"
@@ -11,23 +9,21 @@
 
 // Define storage for header file constants (the values are not needed
 // here for integral constants).
-int const S2::kMaxCellLevel;
-int const S2::kSwapMask;
-int const S2::kInvertMask;
+
+int const S2::kSwapMask = 0x01;
+int const S2::kInvertMask = 0x02;
+int const S2::kMaxCellLevel = 30;
 double const S2::kMaxDetError = 0.8e-15;  // 14 * (2**-54)
+// Enable debugging checks in s2 code?
+bool const S2::debug = DEBUG_MODE;
 
 COMPILE_ASSERT(S2::kSwapMask == 0x01 && S2::kInvertMask == 0x02,
                masks_changed);
 
-// Removed this dependency on GFlags
-// DEFINE_bool(s2debug, DEBUG_MODE, "Enable debugging checks in s2 code");
-
 static const uint32 MIX32 = 0x12b9b0a1UL;
-#include<hash_set>
-namespace __gnu_cxx {
 
 
-
+HASH_NAMESPACE_START
 // The hash function due to Bob Jenkins (see
 // http://burtleburtle.net/bob/hash/index.html).
 static inline void mix(uint32& a, uint32& b, uint32& c) {     // 32bit version
@@ -67,7 +63,7 @@ inline uint32 CollapseZero(uint32 bits) {
   return bits & 0x7ffffffe;
 }
 
-size_t hash<S2Point>::operator()(S2Point const& p) const {
+size_t makeHash(S2Point const& p) {
   // This function is significantly faster than calling HashTo32().
   uint32 const* data = reinterpret_cast<uint32 const*>(p.Data());
   DCHECK_EQ((6 * sizeof(*data)), sizeof(p));
@@ -85,12 +81,13 @@ size_t hash<S2Point>::operator()(S2Point const& p) const {
   return c;
 }
 
+size_t hash<S2Point>::operator()(S2Point const& p) const {
+  return makeHash(p);
+}
 
-}  // namespace __gnu_cxx
-
+HASH_NAMESPACE_END
 
 bool S2::IsUnitLength(S2Point const& p) {
-
   return fabs(p.Norm2() - 1) <= 1e-15;
 }
 
@@ -180,7 +177,7 @@ int S2::RobustCCW(S2Point const& a, S2Point const& b, S2Point const& c) {
 // that we can verify that certain tests actually require the more advanced
 // techniques implemented by the first version.
 
-#define SIMULATION_OF_SIMPLICITY
+#undef SIMULATION_OF_SIMPLICITY
 #ifdef SIMULATION_OF_SIMPLICITY
 
 // Below we define a floating-point type with enough precision so that it can
@@ -702,8 +699,8 @@ S2::LengthMetric const S2::kAvgAngleSpan(M_PI / 2);                    // 1.571
 
 S2::LengthMetric const S2::kMinWidth(
     S2_PROJECTION == S2_LINEAR_PROJECTION ? sqrt(2. / 3) :             // 0.816
-    S2_PROJECTION == S2_TAN_PROJECTION ? M_PI / (2 * sqrt(2)) :        // 1.111
-    S2_PROJECTION == S2_QUADRATIC_PROJECTION ? 2 * sqrt(2) / 3 :       // 0.943
+    S2_PROJECTION == S2_TAN_PROJECTION ? M_PI / (2 * sqrt(2.)) :       // 1.111
+    S2_PROJECTION == S2_QUADRATIC_PROJECTION ? 2 * sqrt(2.) / 3 :      // 0.943
     0);
 
 S2::LengthMetric const S2::kMaxWidth(S2::kMaxAngleSpan.deriv());
@@ -716,9 +713,9 @@ S2::LengthMetric const S2::kAvgWidth(
     0);
 
 S2::LengthMetric const S2::kMinEdge(
-    S2_PROJECTION == S2_LINEAR_PROJECTION ? 2 * sqrt(2) / 3 :          // 0.943
-    S2_PROJECTION == S2_TAN_PROJECTION ? M_PI / (2 * sqrt(2)) :        // 1.111
-    S2_PROJECTION == S2_QUADRATIC_PROJECTION ? 2 * sqrt(2) / 3 :       // 0.943
+    S2_PROJECTION == S2_LINEAR_PROJECTION ? 2 * sqrt(2.) / 3 :         // 0.943
+    S2_PROJECTION == S2_TAN_PROJECTION ? M_PI / (2 * sqrt(2.)) :       // 1.111
+    S2_PROJECTION == S2_QUADRATIC_PROJECTION ? 2 * sqrt(2.) / 3 :      // 0.943
     0);
 
 S2::LengthMetric const S2::kMaxEdge(S2::kMaxAngleSpan.deriv());
@@ -731,13 +728,13 @@ S2::LengthMetric const S2::kAvgEdge(
     0);
 
 S2::LengthMetric const S2::kMinDiag(
-    S2_PROJECTION == S2_LINEAR_PROJECTION ? 2 * sqrt(2) / 3 :          // 0.943
-    S2_PROJECTION == S2_TAN_PROJECTION ? M_PI * sqrt(2) / 3 :          // 1.481
-    S2_PROJECTION == S2_QUADRATIC_PROJECTION ? 8 * sqrt(2) / 9 :       // 1.257
+    S2_PROJECTION == S2_LINEAR_PROJECTION ? 2 * sqrt(2.) / 3 :         // 0.943
+    S2_PROJECTION == S2_TAN_PROJECTION ? M_PI * sqrt(2.) / 3 :         // 1.481
+    S2_PROJECTION == S2_QUADRATIC_PROJECTION ? 8 * sqrt(2.) / 9 :      // 1.257
     0);
 
 S2::LengthMetric const S2::kMaxDiag(
-    S2_PROJECTION == S2_LINEAR_PROJECTION ? 2 * sqrt(2) :              // 2.828
+    S2_PROJECTION == S2_LINEAR_PROJECTION ? 2 * sqrt(2.) :             // 2.828
     S2_PROJECTION == S2_TAN_PROJECTION ? M_PI * sqrt(2. / 3) :         // 2.565
     S2_PROJECTION == S2_QUADRATIC_PROJECTION ? 2.438654594434021032 :  // 2.439
     0);
@@ -749,9 +746,9 @@ S2::LengthMetric const S2::kAvgDiag(
     0);
 
 S2::AreaMetric const S2::kMinArea(
-    S2_PROJECTION == S2_LINEAR_PROJECTION ? 4 / (3 * sqrt(3)) :        // 0.770
-    S2_PROJECTION == S2_TAN_PROJECTION ? (M_PI*M_PI) / (4*sqrt(2)) :   // 1.745
-    S2_PROJECTION == S2_QUADRATIC_PROJECTION ? 8 * sqrt(2) / 9 :       // 1.257
+    S2_PROJECTION == S2_LINEAR_PROJECTION ? 4 / (3 * sqrt(3.)) :       // 0.770
+    S2_PROJECTION == S2_TAN_PROJECTION ? (M_PI*M_PI) / (4*sqrt(2.)) :  // 1.745
+    S2_PROJECTION == S2_QUADRATIC_PROJECTION ? 8 * sqrt(2.) / 9 :      // 1.257
     0);
 
 S2::AreaMetric const S2::kMaxArea(
@@ -764,10 +761,10 @@ S2::AreaMetric const S2::kAvgArea(4 * M_PI / 6);                       // 2.094
 // This is true for all projections.
 
 double const S2::kMaxEdgeAspect = (
-    S2_PROJECTION == S2_LINEAR_PROJECTION ? sqrt(2) :                  // 1.414
-    S2_PROJECTION == S2_TAN_PROJECTION ?  sqrt(2) :                    // 1.414
+    S2_PROJECTION == S2_LINEAR_PROJECTION ? sqrt(2.) :                 // 1.414
+    S2_PROJECTION == S2_TAN_PROJECTION ?  sqrt(2.) :                   // 1.414
     S2_PROJECTION == S2_QUADRATIC_PROJECTION ? 1.442615274452682920 :  // 1.443
     0);
 
-double const S2::kMaxDiagAspect = sqrt(3);                             // 1.732
+double const S2::kMaxDiagAspect = sqrt(3.);                            // 1.732
 // This is true for all projections.

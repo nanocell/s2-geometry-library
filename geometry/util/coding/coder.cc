@@ -8,6 +8,8 @@
 
 // An initialization value used when we are allowed to 
 unsigned char Encoder::kEmptyBuffer = 0;
+const int Encoder::kVarintMax32 = Varint::kMax32;
+const int Encoder::kVarintMax64 = Varint::kMax64;
 
 Encoder::Encoder()
   : orig_(NULL),

@@ -18,7 +18,7 @@ const int kStringPrintfVectorMaxArgs = 32;
 static const char string_printf_empty_block [256] = { '\0' };
 
 string StringPrintfVector(const char* format, const vector<string>& v) {
-  CHECK_LE(v.size(), kStringPrintfVectorMaxArgs)
+  CHECK_LE(v.size(), static_cast<size_t>(kStringPrintfVectorMaxArgs))
       << "StringPrintfVector currently only supports up to "
       << kStringPrintfVectorMaxArgs << " arguments. "
       << "Feel free to add support for more if you need it.";
@@ -28,10 +28,10 @@ string StringPrintfVector(const char* format, const vector<string>& v) {
   // or displaying random chunks of memory to users.
 
   const char* cstr[kStringPrintfVectorMaxArgs];
-  for (int i = 0; i < v.size(); ++i) {
+  for (size_t i = 0; i < v.size(); ++i) {
     cstr[i] = v[i].c_str();
   }
-  for (int i = v.size(); i < arraysize(cstr); ++i) {
+  for (size_t i = v.size(); i < arraysize(cstr); ++i) {
     cstr[i] = &string_printf_empty_block[0];
   }
 

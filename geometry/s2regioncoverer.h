@@ -14,7 +14,9 @@ using std::make_pair;
 using std::vector;
 
 #include "base/macros.h"
-#include "base/scoped_ptr.h"
+#include <boost/scoped_ptr.hpp>
+using boost::scoped_ptr;
+//#include "base/scoped_ptr.h"
 #include "s2cell.h"
 #include "s2cellid.h"
 
@@ -54,7 +56,7 @@ class S2RegionCoverer {
   // By default, the covering uses at most 8 cells at any level.  This gives
   // a reasonable tradeoff between the number of cells used and the accuracy
   // of the approximation (see table below).
-  static int const kDefaultMaxCells = 8;
+  static int const kDefaultMaxCells;
 
   S2RegionCoverer();
   ~S2RegionCoverer();
@@ -138,7 +140,10 @@ class S2RegionCoverer {
     S2Cell cell;
     bool is_terminal;        // Cell should not be expanded further.
     int num_children;        // Number of children that intersect the region.
+#pragma warning(push)
+#pragma warning( disable: 4200 )
     Candidate* children[0];  // Actual size may be 0, 4, 16, or 64 elements.
+#pragma warning(pop)
   };
 
   // If the cell intersects the given region, return a new candidate with no

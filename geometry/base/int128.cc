@@ -8,8 +8,8 @@ using std::ostream;
 using std::cout;
 using std::endl;
 
-#include "base/int128.h"
-#include "base/integral_types.h"
+#include "int128.h"
+#include "integral_types.h"
 
 const uint128 kuint128max(static_cast<uint64>(GG_LONGLONG(0xFFFFFFFFFFFFFFFF)),
                           static_cast<uint64>(GG_LONGLONG(0xFFFFFFFFFFFFFFFF)));

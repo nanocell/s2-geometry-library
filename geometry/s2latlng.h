@@ -103,6 +103,7 @@ class S2LatLng {
   // e.g. "94.518000,150.300000"
   string ToStringInDegrees() const;
   void ToStringInDegrees(string* s) const;
+  string toString() const { return ToStringInDegrees(); }
 
  private:
   // Internal constructor.

@@ -187,7 +187,7 @@ class S2CellUnion : public S2Region {
   }
 
   virtual void Encode(Encoder* const encoder) const {
-    LOG(FATAL) << "Unimplemented";
+    S2LOG(FATAL) << "Unimplemented";
   }
   virtual bool Decode(Decoder* const decoder) { return false; }
 

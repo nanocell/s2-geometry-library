@@ -1,7 +1,9 @@
 # Please edit the following:
 PYTHON_VER=2.6
+
 # TODO(tudorh): Fix this.
-GFLAGS_DIR=/home/tudorh/usr
+GFLAGS_DIR=/Users/hk/
+
 SWIG_BINARY=swig
 ZLIB_DIR=/usr
 
@@ -30,6 +32,7 @@ ifeq ($(OS),Darwin) # Assume Mac Os X
 LD = ld -arch x86_64 -bundle -flat_namespace -undefined suppress
 GFLAGS_LNK = -L$(GFLAGS_DIR)/lib -lgflags
 ZLIB_LNK = -L$(ZLIB_DIR)/lib -lz
+CFLAGS += -DOS_MACOSX -DHASH_NAMESPACE=std
 endif
 
 LDFLAGS=$(GFLAGS_LNK) $(ZLIB_LNK)
@@ -55,7 +58,6 @@ clean:
 	rm -f *.a
 	rm -f objs/*.o
 	rm -f $(BINARIES)
-	rm s2/*wrap*
 	rm -f *.so
 
 # base.

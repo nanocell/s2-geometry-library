@@ -19,7 +19,6 @@ using std::vector;
 
 #include "base/basictypes.h"
 #include "base/logging.h"
-#include "util/math/mathlimits.h"
 
 // Returns the sign of x:
 //   -1 if x < 0,
@@ -31,8 +30,86 @@ template <class T>
 inline T sgn(const T x) {
   return (x == 0 ? 0 : (x < 0 ? -1 : 1));
 }
+// HACK ALERT
+// So here's the deal: There's a ton of junk defined in mathlimits.h that should be moved into
+// mathlimits.cc.  But the only thing that uses mathlimits.cc/h is this, mathutil.cc/h.
+// So I moved a class definition into this .h file before the stuff that references it and stuck
+// mathutil.cc into mathlimits.cc.  Voila!
+#ifndef UTIL_MATH_MATHLIMITS_H__
+#define UTIL_MATH_MATHLIMITS_H__
+// Useful integer and floating point limits and type traits.
+// This is just for the documentation;
+// real members are defined in our specializations below.
+template<typename T> struct MathLimits {
+  // Type name.
+  typedef T Type;
+  // Unsigned version of the Type with the same byte size.
+  // Same as Type for floating point and unsigned types.
+  typedef T UnsignedType;
+  // If the type supports negative values.
+  static const bool kIsSigned;
+  // If the type supports only integer values.
+  static const bool kIsInteger;
+  // Magnitude-wise smallest representable positive value.
+  static const Type kPosMin;
+  // Magnitude-wise largest representable positive value.
+  static const Type kPosMax;
+  // Smallest representable value.
+  static const Type kMin;
+  // Largest representable value.
+  static const Type kMax;
+  // Magnitude-wise smallest representable negative value.
+  // Present only if kIsSigned.
+  static const Type kNegMin;
+  // Magnitude-wise largest representable negative value.
+  // Present only if kIsSigned.
+  static const Type kNegMax;
+  // Smallest integer x such that 10^x is representable.
+  static const int kMin10Exp;
+  // Largest integer x such that 10^x is representable.
+  static const int kMax10Exp;
+  // Smallest positive value such that Type(1) + kEpsilon != Type(1)
+  static const Type kEpsilon;
+  // Typical rounding error that is enough to cover
+  // a few simple floating-point operations.
+  // Slightly larger than kEpsilon to account for a few rounding errors.
+  // Is zero if kIsInteger.
+  static const Type kStdError;
+  // Number of decimal digits of mantissa precision.
+  // Present only if !kIsInteger.
+  static const int kPrecisionDigits;
+  // Not a number, i.e. result of 0/0.
+  // Present only if !kIsInteger.
+  static const Type kNaN;
+  // Positive infinity, i.e. result of 1/0.
+  // Present only if !kIsInteger.
+  static const Type kPosInf;
+  // Negative infinity, i.e. result of -1/0.
+  // Present only if !kIsInteger.
+  static const Type kNegInf;
 
+  // NOTE: Special floating point values behave
+  // in a special (but mathematically-logical) way
+  // in terms of (in)equalty comparison and mathematical operations
+  // -- see out unittest for examples.
+
+  // Special floating point value testers.
+  // Present in integer types for convenience.
+  static bool IsFinite(const Type x);
+  static bool IsNaN(const Type x);
+  static bool IsInf(const Type x);
+  static bool IsPosInf(const Type x);
+  static bool IsNegInf(const Type x);
+};
+// END HACK ALERT
+#endif  //UTIL_MATH_MATHLIMITS_H
 // ========================================================================= //
+
+// Disable error about fabs causing truncation of value because
+// it takes a double instead of a long double (Clang 3.5)
+// See SERVER-15183
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wabsolute-value"
 
 class MathUtil {
  public:
@@ -53,38 +130,11 @@ class MathUtil {
   //
   // A special case occurs when a==0; see DegenerateQuadraticRoots().
   // See also QuadraticIsAmbiguous() and RealQuadraticRoots().
-  static inline QuadraticRootType RealRootsForQuadratic(long double a,
+  static QuadraticRootType RealRootsForQuadratic(long double a,
                                                         long double b,
                                                         long double c,
                                                         long double *r1,
-                                                        long double *r2) {
-    // Deal with degenerate cases where leading coefficients vanish.
-    if (a == 0.0) {
-      return DegenerateQuadraticRoots(b, c, r1, r2);
-    }
-
-    // General case: the quadratic formula, rearranged for greater numerical
-    // stability.
-
-    // If the discriminant is zero to numerical precision, regardless of
-    // sign, treat it as zero and return kAmbiguous.  We use the double
-    // rather than long double value for epsilon because in practice inputs
-    // are generally calculated in double precision.
-    const long double discriminant = QuadraticDiscriminant(a, b, c);
-    if (QuadraticIsAmbiguous(a, b, c, discriminant,
-                             MathLimits<double>::kEpsilon)) {
-      *r2 = *r1 = -b / 2 / a;  // The quadratic is (2*a*x + b)^2 = 0.
-      return kAmbiguous;
-    }
-
-    if (discriminant < 0) {
-      // The discriminant is definitely negative so there are no real roots.
-      return kNoRealRoots;
-    }
-
-    RealQuadraticRoots(a, b, c, discriminant, r1, r2);
-    return kTwoRealRoots;
-  }
+                                                        long double *r2);
 
   // Returns the discriminant of the quadratic equation a * x^2 + b * x + c = 0.
   static inline long double QuadraticDiscriminant(long double a,
@@ -287,15 +337,7 @@ class MathUtil {
   //   from the argument type, i.e. there is no need to specify it explicitly.
   // --------------------------------------------------------------------
   template <class IntOut, class FloatIn>
-  static IntOut Round(FloatIn x) {
-    COMPILE_ASSERT(!MathLimits<FloatIn>::kIsInteger, FloatIn_is_integer);
-    COMPILE_ASSERT(MathLimits<IntOut>::kIsInteger, IntOut_is_not_integer);
-
-    // We don't use sgn(x) below because there is no need to distinguish the
-    // (x == 0) case.  Also note that there are specialized faster versions
-    // of this function for Intel processors at the bottom of this file.
-    return static_cast<IntOut>(x < 0 ? (x - 0.5) : (x + 0.5));
-  }
+  static IntOut Round(FloatIn x);
 
   // Example usage: IntRound(3.6) (no need for IntRound<double>(3.6)).
   template <class FloatIn>
@@ -651,7 +693,6 @@ class MathUtil {
 // We define template specializations of Round() to get the more efficient
 // Intel versions when possible.  Note that gcc does not currently support
 // partial specialization of templatized functions.
-
 template<>
 inline int32 MathUtil::Round<int32, double>(double x) {
   return FastIntRound(x);
@@ -710,5 +751,7 @@ bool MathUtil::WithinFractionOrMargin(const T x, const T y,
            (AbsDiff(x, y) <= Max(margin, fraction * Max(Abs(x), Abs(y))));
   }
 }
+
+#pragma clang diagnostic pop
 
 #endif  // UTIL_MATH_MATHUTIL_H__

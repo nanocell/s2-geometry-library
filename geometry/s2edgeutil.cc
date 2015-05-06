@@ -51,7 +51,7 @@ bool S2EdgeUtil::VertexCrossing(S2Point const& a, S2Point const& b,
   if (a == c) return S2::OrderedCCW(S2::Ortho(a), d, b, a);
   if (b == d) return S2::OrderedCCW(S2::Ortho(b), c, a, b);
 
-  LOG(DFATAL) << "VertexCrossing called with 4 distinct vertices";
+  S2LOG(DFATAL) << "VertexCrossing called with 4 distinct vertices";
   return false;
 }
 

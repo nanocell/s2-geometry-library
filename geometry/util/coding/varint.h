@@ -25,8 +25,8 @@ using std::string;
 class Varint {
  public:
   // Maximum lengths of varint encoding of uint32 and uint64
-  static const int kMax32 = 5;
-  static const int kMax64 = 10;
+  static const int kMax32; // = 5;
+  static const int kMax64;  // = 10;
 
   // REQUIRES   "ptr" points to a buffer of length at least kMaxXX
   // EFFECTS    Scan next varint from "ptr" and store in OUTPUT.

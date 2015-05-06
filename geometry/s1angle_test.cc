@@ -7,9 +7,11 @@
 #include "base/commandlineflags.h"
 #include "base/integral_types.h"
 #include "base/logging.h"
-#include "testing/base/public/gunit.h"
+#include "gtest/gtest.h"
 #include "s2latlng.h"
 #include "s2testing.h"
+
+using namespace std;
 
 DEFINE_int32(iters, (DEBUG_MODE ? 100 : 1000) * (1000 * 1000),
              "Run timing tests with this many iterations");

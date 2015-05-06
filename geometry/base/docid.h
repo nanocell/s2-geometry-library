@@ -3,6 +3,7 @@
 #ifndef BASE_DOCID_H_
 #define BASE_DOCID_H_
 
+#include "base/definer.h"
 #include <assert.h>
 
 // sys/types.h is only needed by this file if !defined(NDEBUG),
@@ -157,11 +158,11 @@ inline uint64 operator+(uint64 a, const DocId& b) { return a + b.docid(); }
 // Required for hashing docids.  docservercache.cc needs to fingerprint them.
 #if !defined __SGI_STL_HASH_FUN_H       // taken from stl_decl.h
 HASH_NAMESPACE_DECLARATION_START
-template <class Key> struct hash;
+template <class Key> class hash;
 HASH_NAMESPACE_DECLARATION_END
 #endif
 HASH_NAMESPACE_DECLARATION_START
-template<> struct hash<DocId> {
+template<> class hash<DocId> {
   size_t operator()(const DocId& d) const {
     return static_cast<size_t>(d.docid());
   }

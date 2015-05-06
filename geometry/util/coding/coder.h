@@ -49,8 +49,8 @@ class Encoder {
 
   // Support for variable length encoding with 7 bits per byte
   // (these are just simple wrappers around the Varint module)
-  static const int kVarintMax32 = Varint::kMax32;
-  static const int kVarintMax64 = Varint::kMax64;
+  static const int kVarintMax32;  // = Varint::kMax32;
+  static const int kVarintMax64;  // = Varint::kMax64;
 
   void put_varint32(uint32 v);
   void put_varint64(uint64 v);
@@ -62,9 +62,6 @@ class Encoder {
   // For new code use put_varint32(ZigZagEncode(signed_value));
   // ZigZag coding is defined in utils/coding/transforms.h
   void put_varsigned32(int32 v);
-
-  // Support for a few special types we don't want to restrict size of
-  void put_docid(DocId d);
 
   // Return number of bytes encoded so far
   int length() const;
@@ -160,12 +157,6 @@ class Decoder {
   //   signed_value = ZigZagDecode(unsigned_temp);
   // ZigZag coding is defined in utils/coding/transforms.h
   bool get_varsigned32(int32* v);
-
-  // Support for a few special types we don't want to restrict size of
-  DocId get_docid();
-
-  // This is used for transitioning docids from 32bits to 64bits
-  DocId32Bit get_docid_32bit();
 
   int pos() const;
   // Return number of bytes decoded so far
@@ -333,25 +324,25 @@ inline bool Decoder::get_varsigned32(int32* v) {
 }
 
 inline void Encoder::put8(unsigned char v) {
-  DCHECK_GE(avail(), sizeof(v));
+  DCHECK_GE((size_t)avail(), sizeof(v));
   *buf_ = v;
   buf_ += sizeof(v);
 }
 
 inline void Encoder::put16(uint16 v) {
-  DCHECK_GE(avail(), sizeof(v));
+  DCHECK_GE((size_t)avail(), sizeof(v));
   LittleEndian::Store16(buf_, v);
   buf_ += sizeof(v);
 }
 
 inline void Encoder::put32(uint32 v) {
-  DCHECK_GE(avail(), sizeof(v));
+  DCHECK_GE((size_t)avail(), sizeof(v));
   LittleEndian::Store32(buf_, v);
   buf_ += sizeof(v);
 }
 
 inline void Encoder::put64(uint64 v) {
-  DCHECK_GE(avail(), sizeof(v));
+  DCHECK_GE((size_t)avail(), sizeof(v));
   LittleEndian::Store64(buf_, v);
   buf_ += sizeof(v);
 }
@@ -363,10 +354,6 @@ inline void Encoder::putword(uword_t v) {
   LittleEndian::Store32(buf_, v);
 #endif /* _LP64 */
   buf_ += sizeof(v);
-}
-
-inline void Encoder::put_docid(DocId d) {
-  put64(DocIdAsNumber(d));
 }
 
 inline void Encoder::putfloat(float f) {
@@ -417,13 +404,6 @@ inline uword_t Decoder::getword() {
   return v;
 }
 
-inline DocId Decoder::get_docid() {
-  return DocId(get64());
-}
-
-inline DocId32Bit Decoder::get_docid_32bit() {
-  return DocId32Bit(get32());
-}
 
 inline float Decoder::getfloat() {
   uint32 v = get32();

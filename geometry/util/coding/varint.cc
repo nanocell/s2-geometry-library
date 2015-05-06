@@ -5,10 +5,8 @@ using std::string;
 
 #include "util/coding/varint.h"
 
-#ifndef COMPILER_MSVC
-const int Varint::kMax32;
-const int Varint::kMax64;
-#endif
+const int Varint::kMax32 = 5;
+const int Varint::kMax64 = 10;
 
 char* Varint::Encode32(char* sptr, uint32 v) {
   return Encode32Inline(sptr, v);

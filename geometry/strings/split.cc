@@ -4,8 +4,6 @@
 using std::numeric_limits;
 
 
-// Removed this dependency on GFlags
-// #include "base/commandlineflags.h"
 #include "base/integral_types.h"
 #include "base/logging.h"
 #include "base/macros.h"
@@ -34,7 +32,30 @@ static const uint64 MIX64 = GG_ULONGLONG(0x2b992ddfa23249d6);  // more of pi
 // ----------------------------------------------------------------------
 
 // These slow down a lot if inlined, so do not inline them  --Sanjay
-extern uint32 Hash32StringWithSeed(const char *s, uint32 len, uint32 c);
+//extern uint32 Hash32StringWithSeed(const char *s, uint32 len, uint32 c);
+// Once again, not included, but copied from:
+// http://szl.googlecode.com/svn-history/r40/trunk/src/utilities/hashutils.cc
+// This is an Apache license...make sure this is ok
+const uint32 kPrimes32[16] ={
+  65537, 65539, 65543, 65551, 65557, 65563, 65579, 65581,
+  65587, 65599, 65609, 65617, 65629, 65633, 65647, 65651,
+};
+uint32 Hash32StringWithSeed(const char *s, uint32 len, uint32 seed) {
+  uint32 n = seed;
+  size_t prime1 = 0, prime2 = 8;  // Indices into kPrimes32
+  union {
+    uint16 n;
+    char bytes[sizeof(uint16)];
+  } chunk;
+  for (const char *i = s, *const end = s + len; i != end; ) {
+    chunk.bytes[0] = *i++;
+    chunk.bytes[1] = i == end ? 0 : *i++;
+    n = n * kPrimes32[prime1++] ^ chunk.n * kPrimes32[prime2++];
+    prime1 &= 0x0F;
+    prime2 &= 0x0F;
+  }
+  return n;
+}
 extern uint64 Hash64StringWithSeed(const char *s, uint32 len, uint64 c);
 extern uint32 Hash32StringWithSeedReferenceImplementation(const char *s,
                                                           uint32 len, uint32 c);
@@ -107,59 +128,8 @@ HASH_TO((uint32 c), Hash32NumWithSeed(static_cast<uint32>(c), MIX32))
 HASH_TO((int32 c),  Hash32NumWithSeed(static_cast<uint32>(c), MIX32))
 HASH_TO((uint64 c), static_cast<uint32>(Hash64NumWithSeed(c, MIX64) >> 32))
 HASH_TO((int64 c),  static_cast<uint32>(Hash64NumWithSeed(c, MIX64) >> 32))
-#ifdef _LP64
-HASH_TO((intptr_t c),  static_cast<uint32>(Hash64NumWithSeed(c, MIX64) >> 32))
-#endif
 
 #undef HASH_TO        // clean up the macro space
-
-
-// HASH_NAMESPACE_DECLARATION_START
-namespace __gnu_cxx {
-
-#if defined(__GNUC__)
-// Use our nice hash function for strings
-template<class _CharT, class _Traits, class _Alloc>
-struct hash<basic_string<_CharT, _Traits, _Alloc> > {
-  size_t operator()(const basic_string<_CharT, _Traits, _Alloc>& k) const {
-    return HashTo32(k.data(), static_cast<uint32>(k.length()));
-  }
-};
-
-// they don't define a hash for const string at all
-template<> struct hash<const string> {
-  size_t operator()(const string& k) const {
-    return HashTo32(k.data(), static_cast<uint32>(k.length()));
-  }
-};
-#endif  // __GNUC__
-
-// MSVC's STL requires an ever-so slightly different decl
-#if defined STL_MSVC
-template<> struct hash<char const*> : PortableHashBase {
-  size_t operator()(char const* const k) const {
-    return HashTo32(k, strlen(k));
-  }
-  // Less than operator:
-  bool operator()(char const* const a, char const* const b) const {
-    return strcmp(a, b) < 0;
-  }
-};
-
-template<> struct hash<string> : PortableHashBase {
-  size_t operator()(const string& k) const {
-    return HashTo32(k.data(), k.length());
-  }
-  // Less than operator:
-  bool operator()(const string& a, const string& b) const {
-    return a < b;
-  }
-};
-
-#endif
-
-}  // hash namespace
-
 
 namespace {
 // NOTE(user): we have to implement our own interator because
@@ -246,6 +216,11 @@ void SplitStringToIteratorAllowEmpty(const StringType& full,
   }
   *result++ = full.substr(begin_index);
 }
+
+#ifdef _WIN32
+#include <iterator>
+//#define back_insert_iterator Platform::Collections::BackInsertIterator
+#endif
 
 void SplitStringIntoNPiecesAllowEmpty(const string& full,
                                       const char* delim,
@@ -462,7 +437,7 @@ DEFINE_SPLIT_ONE_NUMBER_TOKEN(Uint32, uint32, strtou32_0)
 DEFINE_SPLIT_ONE_NUMBER_TOKEN(Int64, int64, strto64_0)
 DEFINE_SPLIT_ONE_NUMBER_TOKEN(Uint64, uint64, strtou64_0)
 DEFINE_SPLIT_ONE_NUMBER_TOKEN(Double, double, strtod)
-#ifdef COMPILER_MSVC  // has no strtof()
+#ifdef _WIN32 // has no strtof()
 // Note: does an implicit cast to float.
 DEFINE_SPLIT_ONE_NUMBER_TOKEN(Float, float, strtod)
 #else

@@ -31,7 +31,7 @@ S2Testing::Random::Random() {
 uint64 S2Testing::Random::Rand64() {
   int bits_of_rand = log2(1ULL + RAND_MAX);
   uint64 result = 0;
-  for (int num_bits = 0; num_bits < 8 * sizeof(uint64);
+  for (size_t num_bits = 0; num_bits < 8 * sizeof(uint64);
        num_bits += bits_of_rand) {
     result <<= bits_of_rand;
     result += random();
@@ -80,7 +80,7 @@ void S2Testing::ParseLatLngs(string const& str, vector<S2LatLng>* latlngs) {
   vector<pair<string, string> > p;
   CHECK(DictionaryParse(str, &p)) << ": str == \"" << str << "\"";
   latlngs->clear();
-  for (int i = 0; i < p.size(); ++i) {
+  for (size_t i = 0; i < p.size(); ++i) {
     latlngs->push_back(S2LatLng::FromDegrees(ParseDouble(p[i].first),
                                              ParseDouble(p[i].second)));
   }
@@ -90,7 +90,7 @@ void S2Testing::ParsePoints(string const& str, vector<S2Point>* vertices) {
   vector<S2LatLng> latlngs;
   S2Testing::ParseLatLngs(str, &latlngs);
   vertices->clear();
-  for (int i = 0; i < latlngs.size(); ++i) {
+  for (size_t i = 0; i < latlngs.size(); ++i) {
     vertices->push_back(latlngs[i].ToPoint());
   }
 }
@@ -107,7 +107,7 @@ S2LatLngRect S2Testing::MakeLatLngRect(string const& str) {
   ParseLatLngs(str, &latlngs);
   CHECK_GT(latlngs.size(), 0);
   S2LatLngRect rect = S2LatLngRect::FromPoint(latlngs[0]);
-  for (int i = 1; i < latlngs.size(); ++i) {
+  for (size_t i = 1; i < latlngs.size(); ++i) {
     rect.AddPoint(latlngs[i]);
   }
   return rect;
@@ -129,7 +129,7 @@ S2Polygon* S2Testing::MakePolygon(string const& str) {
   vector<string> loop_strs;
   SplitStringUsing(str, ";", &loop_strs);
   vector<S2Loop*> loops;
-  for (int i = 0; i < loop_strs.size(); ++i) {
+  for (size_t i = 0; i < loop_strs.size(); ++i) {
     S2Loop* loop = MakeLoop(loop_strs[i]);
     loop->Normalize();
     loops.push_back(loop);
@@ -289,8 +289,9 @@ void S2Testing::CheckCovering(S2Region const& region,
 
   if (!region.MayIntersect(S2Cell(id))) {
     // If region does not intersect id, then neither should the covering.
-    if (check_tight) CHECK(!covering.Intersects(id));
-
+    if (check_tight) {
+        CHECK(!covering.Intersects(id));
+    }
   } else if (!covering.Contains(id)) {
     // The region may intersect id, but we can't assert that the covering
     // intersects id because we may discover that the region does not actually

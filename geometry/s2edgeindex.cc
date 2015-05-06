@@ -68,8 +68,6 @@ using std::pair;
 using std::make_pair;
 
 
-// Removed this dependency on GFlags
-// #include "base/commandlineflags.h"
 #include "base/logging.h"
 #include "s2cell.h"
 #include "s2edgeutil.h"
@@ -77,12 +75,10 @@ using std::make_pair;
 #include "s2regioncoverer.h"
 
 
-// Removed this dependency on GFlags
-// DEFINE_bool(always_recurse_on_children, false,
-//             "When we test a query edge against a cell, we don't "
-//             "recurse if there are only a few test edges in it.  "
-//             "For testing, it is useful to always recurse to the end.  "
-//             "You don't want to use this flag anywhere but in tests.");
+//"When we test a query edge against a cell, we don't "
+//"recurse if there are only a few test edges in it.  "
+//"For testing, it is useful to always recurse to the end.  "
+//"You don't want to use this flag anywhere but in tests.";
 static bool FLAGS_always_recurse_on_children = false;
 
 void S2EdgeIndex::Reset() {
@@ -207,7 +203,7 @@ static bool LenientCrossing(S2Point const& a, S2Point const& b,
 
 bool S2EdgeIndex::EdgeIntersectsCellBoundary(
     S2Point const& a, S2Point const& b, const S2Cell& cell) {
-  S2Point start_vertex = cell.GetVertex(0);
+  //S2Point start_vertex = cell.GetVertex(0);
 
   S2Point vertices[4];
   for (int i = 0; i < 4; ++i) {
@@ -428,7 +424,7 @@ int S2EdgeIndex::GetCovering(
   // Cover the edge by a cap centered at the edge midpoint, then cover
   // the cap by four big-enough cells around the cell vertex closest to the
   // cap center.
-  S2Point middle = ((a + b) / 2).Normalize();
+  S2Point middle = ((a + b) / 2.0).Normalize();
   int actual_level = min(ideal_level, S2CellId::kMaxLevel-1);
   S2CellId::FromPoint(middle).AppendVertexNeighbors(
       actual_level, edge_covering);

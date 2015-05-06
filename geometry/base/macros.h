@@ -10,12 +10,14 @@
 #ifndef BASE_MACROS_H_
 #define BASE_MACROS_H_
 
+#include "base/definer.h"   // For OS_WINDOWS
+
 #include <stddef.h>         // For size_t
 
 // We use our own  local  version of type traits while we're waiting
 // for TR1 type traits to be standardized. Define some macros so that
 // most google3 code doesn't have to work with type traits directly.
-#include "base/type_traits.h"
+#include "type_traits.h"
 
 // The swigged version of an abstract class must be concrete if any methods
 // return objects of the abstract type. We keep it abstract in C++ and
@@ -184,10 +186,12 @@ char (&ArraySizeHelper(const T (&array)[N]))[N];
 // - wan 2005-11-16
 //
 // Starting with Visual C++ 2005, WinNT.h includes ARRAYSIZE.
+#ifndef OS_WINDOWS
 #if !defined(COMPILER_MSVC) || (defined(_MSC_VER) && _MSC_VER < 1400)
 #define ARRAYSIZE(a) \
   ((sizeof(a) / sizeof(*(a))) / \
    static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
+#endif
 #endif
 
 // A macro to turn a symbol into a string

@@ -1,11 +1,66 @@
 // Copyright 2008 Google Inc. All Rights Reserved.
 
+#include "base/definer.h"
+
+#ifdef OS_WINDOWS
+#define _USE_MATH_DEFINES
+#include <cmath>
+#endif
+
+#include "util/math/mathlimits.h"
+#include "util/math/mathlimits.cc"
 #include "util/math/mathutil.h"
 #include <vector>
 using std::vector;
 
 #include "base/integral_types.h"
 #include "base/logging.h"
+
+  template <class IntOut, class FloatIn>
+  IntOut MathUtil::Round(FloatIn x) {
+    COMPILE_ASSERT(!MathLimits<FloatIn>::kIsInteger, FloatIn_is_integer);
+    COMPILE_ASSERT(MathLimits<IntOut>::kIsInteger, IntOut_is_not_integer);
+
+    // We don't use sgn(x) below because there is no need to distinguish the
+    // (x == 0) case.  Also note that there are specialized faster versions
+    // of this function for Intel processors at the bottom of this file.
+    return static_cast<IntOut>(x < 0 ? (x - 0.5) : (x + 0.5));
+  }
+
+template int MathUtil::Round<int,double>(double x);
+
+MathUtil::QuadraticRootType MathUtil::RealRootsForQuadratic(long double a,
+                                                        long double b,
+                                                        long double c,
+                                                        long double *r1,
+                                                        long double *r2) {
+    // Deal with degenerate cases where leading coefficients vanish.
+    if (a == 0.0) {
+      return DegenerateQuadraticRoots(b, c, r1, r2);
+    }
+
+    // General case: the quadratic formula, rearranged for greater numerical
+    // stability.
+
+    // If the discriminant is zero to numerical precision, regardless of
+    // sign, treat it as zero and return kAmbiguous.  We use the double
+    // rather than long double value for epsilon because in practice inputs
+    // are generally calculated in double precision.
+    const long double discriminant = QuadraticDiscriminant(a, b, c);
+    if (QuadraticIsAmbiguous(a, b, c, discriminant,
+                             MathLimits<double>::kEpsilon)) {
+      *r2 = *r1 = -b / 2 / a;  // The quadratic is (2*a*x + b)^2 = 0.
+      return kAmbiguous;
+    }
+
+    if (discriminant < 0) {
+      // The discriminant is definitely negative so there are no real roots.
+      return kNoRealRoots;
+    }
+
+    RealQuadraticRoots(a, b, c, discriminant, r1, r2);
+    return kTwoRealRoots;
+  }
 
 MathUtil::QuadraticRootType MathUtil::DegenerateQuadraticRoots(
     long double b,
@@ -62,8 +117,16 @@ bool MathUtil::RealRootsForCubic(long double const a,
     return true;
   }
 
+// Disable error about fabs causing truncation of value because
+// it takes a double instead of a long double (Clang 3.5+)
+// See SERVER-15183
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wabsolute-value"
+
   long double const A =
     -sgn(R) * pow(fabs(R) + sqrt(R_squared - Q_cubed), 1.0/3.0L);
+
+#pragma clang diagnostic pop
 
   if (A != 0.0) {  // in which case, B from NR is zero
     *r1 = A + Q / A - a_third;
@@ -177,7 +240,7 @@ double MathUtil::LogCombinations(int n, int k) {
   } else {
     double result = 0;
     for (int i = 1; i <= k; i++) {
-      result += log(n - k + i) - log(i);
+      result += log(static_cast<double>(n) - k + i) - log(static_cast<double>(i));
     }
     return result;
   }

@@ -23,7 +23,8 @@ class S2RegionUnion : public S2Region {
   S2RegionUnion();
 
   // Create a region representing the union of the given regions.
-  // Takes ownership of all regions and clears the given vector.
+  // DOES NOT take ownership of all regions.
+  // clears the given vector.
   S2RegionUnion(vector<S2Region*>* regions);
 
   virtual ~S2RegionUnion();
@@ -55,7 +56,7 @@ class S2RegionUnion : public S2Region {
   virtual bool Contains(S2Cell const& cell) const;
   virtual bool MayIntersect(S2Cell const& cell) const;
   virtual void Encode(Encoder* const encoder) const {
-    LOG(FATAL) << "Unimplemented";
+    S2LOG(FATAL) << "Unimplemented";
   }
   virtual bool Decode(Decoder* const decoder) { return false; }
 

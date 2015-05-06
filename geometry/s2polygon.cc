@@ -6,8 +6,9 @@ using std::max;
 using std::swap;
 using std::reverse;
 
-#include <hash_map>
-using __gnu_cxx::hash_map;
+#include "base/definer.h"
+#include "s2.h"
+#include "hash.h"
 
 #include <set>
 using std::set;
@@ -16,9 +17,6 @@ using std::multiset;
 #include <vector>
 using std::vector;
 
-
-// Removed this dependency on GFlags
-// #include "base/commandlineflags.h"
 #include "s2polygon.h"
 
 #include "base/port.h"  // for HASH_NAMESPACE_DECLARATION_START
@@ -31,9 +29,8 @@ using std::vector;
 #include "s2polygonbuilder.h"
 #include "s2polyline.h"
 
-// Removed this dependency on GFlags
-// DECLARE_bool(s2debug);  // defined in s2.cc
-static bool FLAGS_s2debug;
+#include "mongo/util/mongoutils/str.h"
+using mongoutils::str::stream;
 
 static const unsigned char kCurrentEncodingVersionNumber = 1;
 
@@ -98,7 +95,7 @@ void S2Polygon::Release(vector<S2Loop*>* loops) {
 }
 
 static void DeleteLoopsInVector(vector<S2Loop*>* loops) {
-  for (int i = 0; i < loops->size(); ++i) {
+  for (size_t i = 0; i < loops->size(); ++i) {
     delete loops->at(i);
   }
   loops->clear();
@@ -110,24 +107,21 @@ S2Polygon::~S2Polygon() {
 
 typedef pair<S2Point, S2Point> S2PointPair;
 
-#include<hash_set>
-namespace __gnu_cxx {
-
-template<> struct hash<S2PointPair> {
+HASH_NAMESPACE_START
+template<> class hash<S2PointPair> {
+public:
   size_t operator()(S2PointPair const& p) const {
     hash<S2Point> h;
     return h(p.first) + (h(p.second) << 1);
   }
 };
+HASH_NAMESPACE_END
 
-}  // namespace __gnu_cxx
-
-
-bool S2Polygon::IsValid(const vector<S2Loop*>& loops) {
+bool S2Polygon::IsValid(const vector<S2Loop*>& loops, string* err) {
   // If a loop contains an edge AB, then no other loop may contain AB or BA.
   if (loops.size() > 1) {
     hash_map<S2PointPair, pair<int, int> > edges;
-    for (int i = 0; i < loops.size(); ++i) {
+    for (size_t i = 0; i < loops.size(); ++i) {
       S2Loop* lp = loops[i];
       for (int j = 0; j < lp->num_vertices(); ++j) {
         S2PointPair key = make_pair(lp->vertex(j), lp->vertex(j + 1));
@@ -139,6 +133,10 @@ bool S2Polygon::IsValid(const vector<S2Loop*>& loops) {
         pair<int, int> other = edges[key];
         VLOG(2) << "Duplicate edge: loop " << i << ", edge " << j
                  << " and loop " << other.first << ", edge " << other.second;
+        if (err) {
+            *err = stream() << "Duplicate edge: loop " << i << ", edge " << j
+                            << " and loop " << other.first << ", edge " << other.second;
+        }
         return false;
       }
     }
@@ -146,16 +144,18 @@ bool S2Polygon::IsValid(const vector<S2Loop*>& loops) {
 
   // Verify that no loop covers more than half of the sphere, and that no
   // two loops cross.
-  for (int i = 0; i < loops.size(); ++i) {
+  for (size_t i = 0; i < loops.size(); ++i) {
     if (!loops[i]->IsNormalized()) {
       VLOG(2) << "Loop " << i << " encloses more than half the sphere";
+      if (err) *err = stream() << "Loop " << i << " encloses more than half the sphere";
       return false;
     }
-    for (int j = i + 1; j < loops.size(); ++j) {
+    for (size_t j = i + 1; j < loops.size(); ++j) {
       // This test not only checks for edge crossings, it also detects
       // cases where the two boundaries cross at a shared vertex.
       if (loops[i]->ContainsOrCrosses(loops[j]) < 0) {
         VLOG(2) << "Loop " << i << " crosses loop " << j;
+        if (err) *err = stream() << "Loop " << i << " crosses loop " << j;
         return false;
       }
     }
@@ -164,13 +164,13 @@ bool S2Polygon::IsValid(const vector<S2Loop*>& loops) {
   return true;
 }
 
-bool S2Polygon::IsValid() const {
+bool S2Polygon::IsValid(string* err) const {
   for (int i = 0; i < num_loops(); ++i) {
-    if (!loop(i)->IsValid()) {
+    if (!loop(i)->IsValid(err)) {
       return false;
     }
   }
-  return IsValid(loops_);
+  return IsValid(loops_, err);
 }
 
 bool S2Polygon::IsValid(bool check_loops, int max_adjacent) const {
@@ -180,7 +180,7 @@ bool S2Polygon::IsValid(bool check_loops, int max_adjacent) const {
 void S2Polygon::InsertLoop(S2Loop* new_loop, S2Loop* parent,
                            LoopMap* loop_map) {
   vector<S2Loop*>* children = &(*loop_map)[parent];
-  for (int i = 0; i < children->size(); ++i) {
+  for (size_t i = 0; i < children->size(); ++i) {
     S2Loop* child = (*children)[i];
     if (child->ContainsNested(new_loop)) {
       InsertLoop(new_loop, child, loop_map);
@@ -194,7 +194,7 @@ void S2Polygon::InsertLoop(S2Loop* new_loop, S2Loop* parent,
   // Some of the children of the parent loop may now be children of
   // the new loop.
   vector<S2Loop*>* new_children = &(*loop_map)[new_loop];
-  for (int i = 0; i < children->size();) {
+  for (size_t i = 0; i < children->size();) {
     S2Loop* child = (*children)[i];
     if (new_loop->ContainsNested(child)) {
       new_children->push_back(child);
@@ -212,7 +212,7 @@ void S2Polygon::InitLoop(S2Loop* loop, int depth, LoopMap* loop_map) {
     loops_.push_back(loop);
   }
   vector<S2Loop*> const& children = (*loop_map)[loop];
-  for (int i = 0; i < children.size(); ++i) {
+  for (size_t i = 0; i < children.size(); ++i) {
     InitLoop(children[i], depth + 1, loop_map);
   }
 }
@@ -223,14 +223,16 @@ bool S2Polygon::ContainsChild(S2Loop* a, S2Loop* b, LoopMap const& loop_map) {
 
   if (a == b) return true;
   vector<S2Loop*> const& children = loop_map.find(a)->second;
-  for (int i = 0; i < children.size(); ++i) {
+  for (size_t i = 0; i < children.size(); ++i) {
     if (ContainsChild(children[i], b, loop_map)) return true;
   }
   return false;
 }
 
 void S2Polygon::Init(vector<S2Loop*>* loops) {
-  if (FLAGS_s2debug) CHECK(IsValid(*loops));
+  if (S2::debug) {
+      CHECK(IsValid(*loops));
+  }
   DCHECK(loops_.empty());
   loops_.swap(*loops);
 
@@ -247,7 +249,7 @@ void S2Polygon::Init(vector<S2Loop*>* loops) {
   loops_.clear();
   InitLoop(NULL, -1, &loop_map);
 
-  if (FLAGS_s2debug) {
+  if (S2::debug) {
     // Check that the LoopMap is correct (this is fairly cheap).
     for (int i = 0; i < num_loops(); ++i) {
       for (int j = 0; j < num_loops(); ++j) {
@@ -451,7 +453,9 @@ bool S2Polygon::Contains(S2Cell const& cell) const {
   S2Loop cell_loop(cell);
   S2Polygon cell_poly(&cell_loop);
   bool contains = Contains(&cell_poly);
-  if (contains) DCHECK(Contains(cell.GetCenter()));
+  if (contains) {
+      DCHECK(Contains(cell.GetCenter()));
+  }
   return contains;
 }
 
@@ -471,7 +475,9 @@ bool S2Polygon::MayIntersect(S2Cell const& cell) const {
   S2Loop cell_loop(cell);
   S2Polygon cell_poly(&cell_loop);
   bool intersects = Intersects(&cell_poly);
-  if (!intersects) DCHECK(!Contains(cell.GetCenter()));
+  if (!intersects) {
+      DCHECK(!Contains(cell.GetCenter()));
+  }
   return intersects;
 }
 
@@ -670,7 +676,7 @@ class S2LoopsAsVectorsIndex: public S2LoopSequenceIndex {
     DecodeIndex(index, &loop_index, &vertex_in_loop);
     vector<S2Point> const* loop = loops_[loop_index];
     *from = &loop->at(vertex_in_loop);
-    *to = &loop->at(vertex_in_loop == loop->size() - 1
+    *to = &loop->at((size_t)vertex_in_loop == loop->size() - 1
                       ? 0
                       : vertex_in_loop + 1);
   }
@@ -764,7 +770,7 @@ static void ClipBoundary(S2Polygon const* a, bool reverse_a,
       DCHECK_EQ((b->Contains(a1) ^ invert_b), inside);
       if (inside) intersections.push_back(make_pair(1, a1));
       sort(intersections.begin(), intersections.end());
-      for (int k = 0; k < intersections.size(); k += 2) {
+      for (size_t k = 0; k < intersections.size(); k += 2) {
         if (intersections[k] == intersections[k+1]) continue;
         builder->AddEdge(intersections[k].second, intersections[k+1].second);
       }
@@ -791,7 +797,7 @@ void S2Polygon::InitToIntersectionSloppy(S2Polygon const* a, S2Polygon const* b,
   ClipBoundary(a, false, b, false, false, true, &builder);
   ClipBoundary(b, false, a, false, false, false, &builder);
   if (!builder.AssemblePolygon(this, NULL)) {
-    LOG(DFATAL) << "Bad directed edges in InitToIntersection";
+    S2LOG(DFATAL) << "Bad directed edges in InitToIntersection";
   }
 }
 
@@ -813,7 +819,7 @@ void S2Polygon::InitToUnionSloppy(S2Polygon const* a, S2Polygon const* b,
   ClipBoundary(a, false, b, false, true, true, &builder);
   ClipBoundary(b, false, a, false, true, false, &builder);
   if (!builder.AssemblePolygon(this, NULL)) {
-    LOG(DFATAL) << "Bad directed edges";
+    S2LOG(DFATAL) << "Bad directed edges";
   }
 }
 
@@ -835,7 +841,7 @@ void S2Polygon::InitToDifferenceSloppy(S2Polygon const* a, S2Polygon const* b,
   ClipBoundary(a, false, b, true, true, true, &builder);
   ClipBoundary(b, true, a, false, false, false, &builder);
   if (!builder.AssemblePolygon(this, NULL)) {
-    LOG(DFATAL) << "Bad directed edges in InitToDifference";
+    S2LOG(DFATAL) << "Bad directed edges in InitToDifference";
   }
 }
 
@@ -854,7 +860,7 @@ vector<S2Point>* SimplifyLoopAsPolyline(S2Loop const* loop, S1Angle tolerance) {
   // Add them all except the last: it is the same as the first.
   vector<S2Point>* simplified_line = new vector<S2Point>(indices.size() - 1);
   VLOG(4) << "Now simplified to: ";
-  for (int i = 0; i + 1 < indices.size(); ++i) {
+  for (size_t i = 0; i + 1 < indices.size(); ++i) {
     (*simplified_line)[i] = line.vertex(indices[i]);
     VLOG(4) << S2LatLng(line.vertex(indices[i]));
   }
@@ -879,7 +885,7 @@ void BreakEdgesAndAddToBuilder(S2LoopsAsVectorsIndex* edge_index,
     ClipEdge(*from, *to, edge_index, false, &intersections);
     intersections.push_back(make_pair(1, *to));
     sort(intersections.begin(), intersections.end());
-    for (int k = 0; k + 1 < intersections.size(); ++k) {
+    for (size_t k = 0; k + 1 < intersections.size(); ++k) {
       if (intersections[k] == intersections[k+1]) continue;
       builder->AddEdge(intersections[k].second, intersections[k+1].second);
     }
@@ -920,11 +926,11 @@ void S2Polygon::InitToSimplified(S2Polygon const* a, S1Angle tolerance) {
     BreakEdgesAndAddToBuilder(&index, &builder);
 
     if (!builder.AssemblePolygon(this, NULL)) {
-      LOG(DFATAL) << "Bad edges in InitToSimplified.";
+      S2LOG(DFATAL) << "Bad edges in InitToSimplified.";
     }
   }
 
-  for (int i = 0; i < simplified_loops.size(); ++i) {
+  for (size_t i = 0; i < simplified_loops.size(); ++i) {
     delete simplified_loops[i];
   }
   simplified_loops.clear();
@@ -966,7 +972,7 @@ void S2Polygon::InternalClipPolyline(bool invert,
     sort(intersections.begin(), intersections.end());
     // At this point we have a sorted array of vertex pairs representing
     // the edge(s) obtained after clipping (a0,a1) against the polygon.
-    for (int k = 0; k < intersections.size(); k += 2) {
+    for (size_t k = 0; k < intersections.size(); k += 2) {
       if (intersections[k] == intersections[k+1]) continue;
       S2Point const& v0 = intersections[k].second;
       S2Point const& v1 = intersections[k+1].second;
@@ -1029,7 +1035,7 @@ S2Polygon* S2Polygon::DestructiveUnionSloppy(vector<S2Polygon*>* polygons,
   // to the queue until we have a single polygon to return.
   typedef multimap<int, S2Polygon*> QueueType;
   QueueType queue;  // Map from # of vertices to polygon.
-  for (int i = 0; i < polygons->size(); ++i)
+  for (size_t i = 0; i < polygons->size(); ++i)
     queue.insert(make_pair((*polygons)[i]->num_vertices(), (*polygons)[i]));
   polygons->clear();
 
@@ -1078,11 +1084,11 @@ void S2Polygon::InitToCellUnionBorder(S2CellUnion const& cells) {
     builder.AddLoop(&cell_loop);
   }
   if (!builder.AssemblePolygon(this, NULL)) {
-    LOG(DFATAL) << "AssemblePolygon failed in InitToCellUnionBorder";
+    S2LOG(DFATAL) << "AssemblePolygon failed in InitToCellUnionBorder";
   }
 }
 
-bool S2Polygon::IsNormalized() const {
+bool S2Polygon::IsNormalized(string* err) const {
   set<S2Point> vertices;
   S2Loop* last_parent = NULL;
   for (int i = 0; i < num_loops(); ++i) {
@@ -1100,7 +1106,13 @@ bool S2Polygon::IsNormalized() const {
     for (int j = 0; j < child->num_vertices(); ++j) {
       if (vertices.count(child->vertex(j)) > 0) ++count;
     }
-    if (count > 1) return false;
+    if (count > 1) {
+      if (err) {
+        *err = stream() << "Loop " << i << " shares more than one vertex"
+                        << " with its parent loop " << GetParent(i);
+      }
+      return false;
+    }
   }
   return true;
 }

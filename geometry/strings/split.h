@@ -20,15 +20,10 @@ using std::multiset;
 using std::pair;
 using std::make_pair;
 
-#include <hash_map>
-using __gnu_cxx::hash_map;
-
-#include <hash_set>
-using __gnu_cxx::hash_set;
-
+#include "base/definer.h"
+#include "hash.h"
 
 using namespace std;
-using namespace __gnu_cxx;
 
 // ----------------------------------------------------------------------
 // SplitStringAllowEmpty()

@@ -90,7 +90,8 @@ struct select2nd : public std::unary_function<_Pair, typename _Pair::second_type
 };
 
 
-#if _MSC_VER >= 1300
+//#if _MSC_VER >= 1300
+#if 0 //_MSC_VER >= 1300
 
 // If you compile on Windows and get a compile-time error because
 // some google3 code specifies a 3rd or 4th parameter to one of

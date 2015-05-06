@@ -9,6 +9,7 @@ using std::min;
 using std::max;
 using std::swap;
 using std::reverse;
+using std::signbit;
 
 #include <limits>
 using std::numeric_limits;
@@ -328,7 +329,7 @@ string ExactFloat::ToStringWithMaxDigits(int max_digits) const {
     // Use fixed format.  We split this into two cases depending on whether
     // the integer portion is non-zero or not.
     if (exp10 > 0) {
-      if (exp10 >= digits.size()) {
+      if ((size_t)exp10 >= digits.size()) {
         str += digits;
         for (int i = exp10 - digits.size(); i > 0; --i) {
           str.push_back('0');

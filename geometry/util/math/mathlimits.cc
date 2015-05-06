@@ -4,7 +4,6 @@
 //
 
 #include "util/math/mathlimits.h"
-
 #include "base/integral_types.h"
 
 // MSVC++ 2005 thinks the header declaration was a definition, and
