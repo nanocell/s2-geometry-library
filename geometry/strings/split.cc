@@ -4,7 +4,8 @@
 using std::numeric_limits;
 
 
-#include "base/commandlineflags.h"
+// Removed this dependency on GFlags
+// #include "base/commandlineflags.h"
 #include "base/integral_types.h"
 #include "base/logging.h"
 #include "base/macros.h"
