@@ -2,7 +2,8 @@
 
 #include "s2.h"
 
-#include "base/commandlineflags.h"
+//Removed this dependency on GFLags
+//#include "base/commandlineflags.h"
 #include "base/integral_types.h"
 #include "base/logging.h"
 #include "util/math/matrix3x3-inl.h"
@@ -18,7 +19,8 @@ double const S2::kMaxDetError = 0.8e-15;  // 14 * (2**-54)
 COMPILE_ASSERT(S2::kSwapMask == 0x01 && S2::kInvertMask == 0x02,
                masks_changed);
 
-DEFINE_bool(s2debug, DEBUG_MODE, "Enable debugging checks in s2 code");
+// Removed this dependency on GFlags
+// DEFINE_bool(s2debug, DEBUG_MODE, "Enable debugging checks in s2 code");
 
 static const uint32 MIX32 = 0x12b9b0a1UL;
 #include<hash_set>

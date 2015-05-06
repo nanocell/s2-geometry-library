@@ -17,7 +17,8 @@ using std::multiset;
 using std::vector;
 
 
-#include "base/commandlineflags.h"
+// Removed this dependency on GFlags
+// #include "base/commandlineflags.h"
 #include "s2polygon.h"
 
 #include "base/port.h"  // for HASH_NAMESPACE_DECLARATION_START
@@ -30,7 +31,9 @@ using std::vector;
 #include "s2polygonbuilder.h"
 #include "s2polyline.h"
 
-DECLARE_bool(s2debug);  // defined in s2.cc
+// Removed this dependency on GFlags
+// DECLARE_bool(s2debug);  // defined in s2.cc
+static bool FLAGS_s2debug;
 
 static const unsigned char kCurrentEncodingVersionNumber = 1;
 

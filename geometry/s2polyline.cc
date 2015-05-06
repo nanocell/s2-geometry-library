@@ -7,7 +7,8 @@ using std::multiset;
 #include <vector>
 using std::vector;
 
-#include "base/commandlineflags.h"
+// Removed this dependency on GFlags
+// #include "base/commandlineflags.h"
 #include "base/logging.h"
 #include "util/math/matrix3x3-inl.h"
 #include "s2polyline.h"
@@ -18,7 +19,9 @@ using std::vector;
 #include "s2latlng.h"
 #include "s2edgeutil.h"
 
-DECLARE_bool(s2debug);  // defined in s2.cc
+// Removed this dependency on GFlags
+// DECLARE_bool(s2debug);  // defined in s2.cc
+static bool FLAGS_s2debug;
 
 static const unsigned char kCurrentEncodingVersionNumber = 1;
 
