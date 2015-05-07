@@ -738,8 +738,8 @@ void SplitStringToHashmapUsing(const string& full, const char* delim,
 // For even better performance, store the result in a vector<StringPiece> to
 // avoid string copies.
 // ----------------------------------------------------------------------
-void SplitStringAllowEmpty(const string& full, const char* delim,
-                           vector<string>* result);
+// void SplitStringAllowEmpty(const string& full, const char* delim,
+//                            vector<string>* result);
 
 // ----------------------------------------------------------------------
 // SplitStringWithEscaping()

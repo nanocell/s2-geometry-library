@@ -316,12 +316,12 @@ void SplitStringIntoNPiecesAllowEmpty(const string& full,
 //    to 'result'.  If there are consecutive delimiters, this function
 //    will return corresponding empty strings.
 // ----------------------------------------------------------------------
-void SplitStringAllowEmpty(const string& full, const char* delim,
-                           vector<string>* result) {
-  AppendTo(result, strings::Split(full, AnyOf(delim)));
-}
+// void SplitStringAllowEmpty(const string& full, const char* delim,
+//                            vector<string>* result) {
+//   AppendTo(result, strings::Split(full, AnyOf(delim)));
+// }
 
-void SplitStringUsing(const string& full,
+void SplitStringUsing2(const string& full,
                       const char* delim,
                       vector<string>* result) {
   AppendTo(result, strings::Split(full, AnyOf(delim), strings::SkipEmpty()));
@@ -886,7 +886,7 @@ bool SplitStringIntoKeyValues(const string& line,
   if (value_value_delimiters.empty()) {  // one value
     values->push_back(values_string);
   } else {                               // multiple values
-    SplitStringUsing(values_string, value_value_delimiters.c_str(), values);
+    SplitStringUsing2(values_string, value_value_delimiters.c_str(), values);
     if (values->size() < 1) {
       return false;  // no value
     }
@@ -905,7 +905,7 @@ bool SplitStringIntoKeyValuePairs(
   if (key_value_pair_delimiters.empty()) {
     pairs.push_back(line);
   } else {
-    SplitStringUsing(line, key_value_pair_delimiters.c_str(), &pairs);
+    SplitStringUsing2(line, key_value_pair_delimiters.c_str(), &pairs);
   }
 
   bool success = true;

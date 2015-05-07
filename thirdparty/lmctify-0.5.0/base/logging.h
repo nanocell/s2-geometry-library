@@ -16,15 +16,16 @@
 #define BASE_LOGGING_H__
 
 #include <string>
+#include <sstream>
 
-#include "gflags/gflags.h"
+// #include "gflags/gflags.h"
 
 // Log messages at a level >= this flag are sent to stderr.
-DECLARE_int32(stderrthreshold);
+// DECLARE_int32(stderrthreshold);
 
 // Log suppression level: messages logged at a lower level than this are
 // suppressed.
-DECLARE_int32(minloglevel);
+// DECLARE_int32(minloglevel);
 
 enum LogLevel {
   LOGLEVEL_INFO,     // Informational.
@@ -61,16 +62,24 @@ class LogMessage {
   LogMessage(LogLevel level, const char* filename, int line);
   ~LogMessage();
 
-  LogMessage& operator<<(const std::string& value);
-  LogMessage& operator<<(const char* value);
-  LogMessage& operator<<(char value);
-  LogMessage& operator<<(int value);
-  LogMessage& operator<<(uint value);
-  LogMessage& operator<<(long value);
-  LogMessage& operator<<(unsigned long value);
-  LogMessage& operator<<(long long value);
-  LogMessage& operator<<(unsigned long long value);
-  LogMessage& operator<<(double value);
+  // LogMessage& operator<<(const std::string& value);
+  // LogMessage& operator<<(const char* value);
+  // LogMessage& operator<<(char value);
+  // LogMessage& operator<<(int value);
+  // LogMessage& operator<<(unsigned int value);
+  // LogMessage& operator<<(long value);
+  // LogMessage& operator<<(unsigned long value);
+  // LogMessage& operator<<(long long value);
+  // LogMessage& operator<<(unsigned long long value);
+  // LogMessage& operator<<(double value);
+  template<class T>
+  LogMessage& operator<<(const T& value)
+  {
+    std::ostringstream s;
+    s << value;
+    message_ += s.str();
+    return *this;
+  }
 
  private:
   friend class LogFinisher;
