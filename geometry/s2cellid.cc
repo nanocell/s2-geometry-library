@@ -20,10 +20,12 @@ using std::vector;
 #include "base/integral_types.h"
 #include "base/logging.h"
 #include "strings/strutil.h"
+#include "strings/strutil2.h"
 #include "s2.h"
 #include "s2latlng.h"
 #include "util/math/mathutil.h"
 #include "util/math/vector2-inl.h"
+#include "base/stringprintf.h"
 
 // The following lookup tables are used to convert efficiently between an
 // (i,j) cell index and the corresponding position along the Hilbert curve.

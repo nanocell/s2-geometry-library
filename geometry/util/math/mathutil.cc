@@ -4,8 +4,8 @@
 #include <vector>
 using std::vector;
 
-#include "base/integral_types.h"
-#include "base/logging.h"
+// #include "base/integral_types.h"
+// #include "base/logging.h"
 
 MathUtil::QuadraticRootType MathUtil::DegenerateQuadraticRoots(
     long double b,

@@ -25,7 +25,7 @@ using std::make_pair;
 
 // Removed this dependency on GFlags
 // #include "base/commandlineflags.h"
-#include "base/logging.h"
+#include "base/logging2.h"
 #include "base/scoped_ptr.h"
 #include "util/coding/coder.h"
 #include "s2cap.h"

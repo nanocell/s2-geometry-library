@@ -9,7 +9,7 @@ using std::vector;
 
 // Removed this dependency on GFlags
 // #include "base/commandlineflags.h"
-#include "base/logging.h"
+#include "base/logging2.h"
 #include "util/math/matrix3x3-inl.h"
 #include "s2polyline.h"
 

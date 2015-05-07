@@ -44,8 +44,8 @@ const FieldValue kIllegalFieldValue = static_cast<FieldValue>(INT_MAX);
 // It is expected that we *never* have a collision of Fingerprints for
 // 2 distinct objects.  No object has kIllegalFprint as its Fingerprint.
 typedef uint64 Fprint;
-const Fprint  kIllegalFprint = static_cast<Fprint>(0);
-const Fprint  kMaxFprint = static_cast<Fprint>(kuint64max);
+// const Fprint  kIllegalFprint = static_cast<Fprint>(0);
+// const Fprint  kMaxFprint = static_cast<Fprint>(kuint64max);
 
 // 64 bit checksum (see common/checksummer.{h,cc})
 typedef uint64 Checksum64;
@@ -96,8 +96,9 @@ enum { MLOCK_ALL = -1, MLOCK_NONE = 0 };
 //       explicit MyClass(base::LinkerInitialized x) {}
 // and invoked as
 //       static MyClass my_variable_name(base::LINKER_INITIALIZED);
-namespace base {
-enum LinkerInitialized { LINKER_INITIALIZED };
-}
+
+// namespace base {
+// enum LinkerInitialized { LINKER_INITIALIZED };
+// }
 
 #endif  // _BASICTYPES_H_

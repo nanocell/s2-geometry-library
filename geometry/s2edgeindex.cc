@@ -70,7 +70,7 @@ using std::make_pair;
 
 // Removed this dependency on GFlags
 // #include "base/commandlineflags.h"
-#include "base/logging.h"
+#include "base/logging2.h"
 #include "s2cell.h"
 #include "s2edgeutil.h"
 #include "s2polyline.h"

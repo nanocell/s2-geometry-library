@@ -23,7 +23,7 @@ using std::priority_queue;
 using std::vector;
 
 
-#include "base/logging.h"
+#include "base/logging2.h"
 #include "s2.h"
 #include "s2cap.h"
 #include "s2cellunion.h"

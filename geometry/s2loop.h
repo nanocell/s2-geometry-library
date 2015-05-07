@@ -11,7 +11,6 @@ using std::multimap;
 using std::vector;
 
 
-#include "base/logging.h"
 #include "base/macros.h"
 #include "s2edgeindex.h"
 #include "s2region.h"

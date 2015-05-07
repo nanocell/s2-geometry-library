@@ -9,6 +9,7 @@ using std::vector;
 using std::string;
 #include "stringprintf.h"
 #include "base/logging.h"
+#include "base/macros.h"
 // Max arguments supported by StringPrintVector
 const int kStringPrintfVectorMaxArgs = 32;
 

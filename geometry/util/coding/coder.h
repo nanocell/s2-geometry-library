@@ -17,6 +17,7 @@ using std::reverse;
 #include "base/logging.h"
 #include "base/port.h"
 #include "util/endian/endian.h"
+#include "base/macros2.h"
 
 /* Class for encoding data into a memory buffer */
 class Encoder {

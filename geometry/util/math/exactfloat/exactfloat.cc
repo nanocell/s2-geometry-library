@@ -16,6 +16,7 @@ using std::numeric_limits;
 #include "base/integral_types.h"
 #include "base/logging.h"
 #include "openssl/crypto.h"
+#include "base/macros.h"
 
 // Define storage for constants.
 const int ExactFloat::kMinExp;
@@ -86,7 +87,7 @@ static int BN_ext_count_low_zero_bits(const BIGNUM* bn) {
 
 ExactFloat::ExactFloat(double v) {
   BN_init(&bn_);
-  sign_ = signbit(v) ? -1 : 1;
+  sign_ = std::signbit(v) ? -1 : 1;
   if (isnan(v)) {
     set_nan();
   } else if (isinf(v)) {

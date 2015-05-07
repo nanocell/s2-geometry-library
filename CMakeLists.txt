@@ -5,9 +5,16 @@ find_package(PythonLibs)
 find_package(Boost 1.58.0 COMPONENTS python3)
 find_package(OpenSSL)
 
-include_directories(./geometry)
+# set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+# set(CMAKE_C_COMPILER /usr/bin/clang)
+
+set(LMCTIFY_SRC "thirdparty/lmctify-0.5.0")
+
+include_directories(geometry)
+include_directories(${LMCTIFY_SRC})
 
 add_definitions(-DNDEBUG -DS2_USE_EXACTFLOAT -DARCH_K8)
+add_definitions(-std=c++0x) 
 
 add_library(google_util_geometry_s2cellid 
 	SHARED
@@ -23,6 +30,7 @@ add_library(google_util_coding
 	geometry/util/coding/varint.cc	
 )
 
+file(GLOB s2_geometry_cpp "geometry/strings/*.cc")
 add_library(google_util_geometry_s2 
 	SHARED
 	geometry/s1interval.cc
@@ -42,6 +50,8 @@ add_library(google_util_geometry_s2
 	geometry/s2regioncoverer.cc
 	geometry/s2regionintersection.cc
 	geometry/s2regionunion.cc
+
+	${s2_geometry_cpp}
 )
 
 
@@ -51,25 +61,23 @@ add_library(google_util_math SHARED
 	geometry/util/math/exactfloat/exactfloat.cc
 )
 
-add_library(google_base SHARED
-	geometry/base/int128.cc
-	geometry/base/strtoint.cc
-	geometry/base/logging.cc
-	geometry/base/stringprintf.cc	
-)
+######################
+# Build lmctify
+######################
 
-add_library(google_strings SHARED
-	geometry/strings/ascii_ctype.cc
-	geometry/strings/split.cc
-	geometry/strings/stringprintf.cc
-	geometry/strings/strutil.cc	
+
+file(GLOB lmctify_cpp "${LMCTIFY_SRC}/base/*.cc" "${LMCTIFY_SRC}/strings/*.cc" "${LMCTIFY_SRC}/util/utf/*.cc")
+add_library(lmctify SHARED
+	${lmctify_cpp}
 )
 
 message("Python:  ${PYTHONLIBS_FOUND}")
 message("Boost:   ${Boost_FOUND}")
 message("OpenSSL: ${OPENSSL_FOUND}")
 
-
+########################
+# Build Python Bindings
+########################
 if (PYTHONLIBS_FOUND AND Boost_FOUND)
 	string(REPLACE "." ";" VERSION_LIST ${PYTHONLIBS_VERSION_STRING})
 	list(GET VERSION_LIST 0 PYTHON_VERSION_MAJOR)
@@ -102,8 +110,7 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND)
 		${PYTHON_LIBRARIES} 
 		${Boost_LIBRARIES} 
 		${OPENSSL_LIBRARIES}
-		google_base
-		google_strings
+		lmctify
 		google_util_geometry_s2
 		google_util_geometry_s2cellid
 		google_util_coding
@@ -121,8 +128,7 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND)
 endif (PYTHONLIBS_FOUND AND Boost_FOUND)
 
 install(TARGETS
-	google_base
-	google_strings
+	lmctify
 	google_util_geometry_s2cellid
 	google_util_geometry_s2
 	google_util_coding

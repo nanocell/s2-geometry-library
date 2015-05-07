@@ -21,6 +21,7 @@ using std::vector;
 // #include "base/commandlineflags.h"
 #include "s2polygon.h"
 
+#include <base/logging2.h>
 #include "base/port.h"  // for HASH_NAMESPACE_DECLARATION_START
 #include "util/coding/coder.h"
 #include "s2edgeindex.h"

@@ -15,9 +15,11 @@ using __gnu_cxx::hash_map;
 #include "base/basictypes.h"
 #include "base/logging.h"
 #include "base/macros.h"
+#include "base/macros2.h"
 #include "base/port.h"  // for HASH_NAMESPACE_DECLARATION_START
 #include "util/math/vector3-inl.h"
 #include "util/math/matrix3x3.h"
+
 
 // An S2Point represents a point on the unit sphere as a 3D vector.  Usually
 // points are normalized to be unit length, but some methods do not require
