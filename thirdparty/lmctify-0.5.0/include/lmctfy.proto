@@ -1,0 +1,610 @@
+// Copyright 2014 Google Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package containers.lmctfy;
+
+import "include/virtual_host.proto";
+
+// Specifies what resources to isolate (and how they should be isolated) on a
+// container. Used for container creation and updates.
+message ContainerSpec {
+  // UID of the requested container owner. If this field is missing it is
+  // assumed to be the same as the caller at creation time.
+  optional int64 owner = 1;
+
+  // The GID of the requested owner's group. If this field is missing it is
+  // assumed to be the same as the caller at creation time.
+  optional int64 owner_group = 8;
+
+  // The limit on allowed children for this container
+  optional int64 children_limit = 9;
+
+  // Commonly used resources
+  optional CpuSpec cpu = 2;
+  optional MemorySpec memory = 3;
+  optional NetworkSpec network = 5;
+  optional BlockIoSpec blockio = 12;
+
+  optional MonitoringSpec monitoring = 6;
+  optional FilesystemSpec filesystem = 7;
+  optional DeviceSpec device = 11;
+
+  // Virtual host environment.
+  optional VirtualHostSpec virtual_host = 10;
+
+  // Security spec.
+  optional SecuritySpec security_spec = 13;
+
+  // Next ID: 14
+}
+
+// Specification for supported notification events.
+message EventSpec {
+  // Event triggered when the specified container runs out of memory.
+  message Oom {
+  }
+  optional Oom oom = 1;
+
+  // Event triggered when the specified container crossed the specified memory
+  // usage threshold.
+  message MemoryThreshold {
+    // The threshold in bytes.
+    optional int64 usage = 1;
+  }
+  optional MemoryThreshold memory_threshold = 2;
+
+  // UNIMPLEMENTED.
+  // Event triggered when the specified container is empty (it has no processes
+  // or threads). This may occur due to movement of threads or exiting of
+  // processes.
+  message ContainerEmpty {
+  }
+  optional ContainerEmpty container_empty = 3;
+}
+
+message RunSpec {
+  // How to handle the file descriptors for the new process.
+  enum FdPolicy {
+    // Invalid policy.
+    UNKNOWN = 0;
+
+    // Run the command with all file descriptors inherited from the parent
+    // process.
+    INHERIT = 1;
+
+    // Run the command with all file descriptors detached from the parent
+    // process (redirected to /dev/null).
+    DETACHED = 2;
+  }
+  // If missing defaults to INHERIT.
+  optional FdPolicy fd_policy = 1;
+
+  message Console {
+    // The name of the slave pseudoterminal to be used. The format is that of
+    // the output of ptsname().
+    // TODO(vishnuk): Support both '/dev/pts/xx' and 'xx' as input. As of now it
+    // is expected to be just 'xx'.
+    optional string slave_pty = 1;
+  }
+  // UNIMPLEMENTED
+  optional Console console = 2;
+
+  // AppArmor profile name.
+  //
+  // TODO(xiaopanzhang): This should be in the ContainerSpec. However currently
+  // we don't checkpoint the ContainerSpec so the profile name which is given at
+  // "lmctfy create" time is not available at "lmctfy run" time. Remove this
+  // field as long as we have the checkpoint support in place.
+  optional string apparmor_profile = 3;
+}
+
+// VirtualHostSpec configures a host environment for the container.
+// An empty VirtualHostSpec is invalid. Currently VirtualHostSpec can only be
+// specified for top-level containers.
+// Adding an empty VirtualHostSpec enables process, ipc, and mount isolation, if
+// enabled on the host kernel.
+message VirtualHostSpec {
+  // UNIMPLEMENTED
+  // Hostname visible to the tasks running inside container.
+  optional string virtual_hostname = 1;
+
+  // The command to be used for init. A default init is used if this is not
+  // provided.
+  message Init {
+    repeated string init_argv = 1;
+
+    // Runtime information.
+    optional RunSpec run_spec = 2;
+  }
+  optional Init init = 2;
+
+  // Network setup in the Virtual Host.
+  optional Network network = 3;
+
+  // TODO(vmarmol): Add a MountSpec, we enable mount isolation, but don't have a
+  // way to specify mounts just yet.
+
+}
+
+enum SchedulingLatency {
+  // No latency guarantee.
+  BEST_EFFORT = 1;
+
+  // Guarantee on forward progress.
+  NORMAL = 2;
+
+  // Low-latency access for latency-sensitive loads. Default.
+  PRIORITY = 3;
+
+  // Extremely low-latency access for latency-critical loads.
+  PREMIER = 4;
+}
+
+message CpuSpec {
+  // CPU scheduling latency guarantee to provide for the container. Default
+  // scheduling latency is NORMAL. Note that scheduling latency cannot be
+  // updated.
+  optional SchedulingLatency scheduling_latency = 1;
+
+  // The amount of CPU requested.
+  // Units: CPU milliseconds per second.
+  optional uint64 limit = 2;
+
+  // The amount of CPU after which the container's usage will be throttled.
+  // Units: CPU milliseconds per second.
+  optional uint64 max_limit = 3;
+
+  // Mask of CPU cores on which this container will be allowed to run. If not
+  // specified, inherits the parent's mask.
+  message Mask {
+    repeated uint64 data = 1;
+  }
+  optional Mask mask = 4;
+}
+
+message MemorySpec {
+  // Relative eviction priority in range of 0 - 10000. Higher value means
+  // higher priority and less likely to get evicted. Default value is 5000.
+  optional int32 eviction_priority = 1;
+
+  // The amount of memory requested. Default is unlimited (-1).
+  // Units: bytes.
+  optional int64 limit = 2;
+
+  // UNIMPLEMENTED
+  // The hard limit on the amount of memory that can be used. Going over "limit"
+  // may decrease the priority of memory requests, going over "max_limit" OOMs
+  // the container. When it is not specified, defaults to "limit".
+  // Units: bytes.
+  optional int64 max_limit = 3;
+
+  // The amount of guaranteed memory.  Default is 0.
+  // Units: bytes.
+  optional int64 reservation = 4;
+
+  // UNIMPLEMENTED
+  // Absolute path.
+  optional string hugetlbfs_path = 5;
+
+  // UNIMPLEMENTED
+  message TmpfsSpec {
+    // Absolute path.
+    repeated string path = 1;
+  }
+  optional TmpfsSpec tmpfs = 6;
+
+  // The amount of swap space requested. Default is unlimited (-1).
+  // Units: bytes.
+  optional int64 swap_limit = 7;
+
+  // The sampling ratio for idle anon memory
+  optional int32 compression_sampling_ratio = 8;
+
+  // Time (in seconds) after which a page is considered cold.
+  optional int32 stale_page_age = 9;
+
+  message Dirty {
+    // Either both ratios or both limits should be set.  A mixture of ratios
+    // and limits is incorrect, as is just one ratio or limit.
+    optional int32 ratio = 1;
+    optional int32 limit = 2;
+    optional int32 background_ratio = 3;
+    optional int32 background_limit = 4;
+  };
+  optional Dirty dirty = 10;
+
+  optional bool kmem_charge_usage = 11;
+}
+
+
+message BlockIoSpec {
+  // Block IO operations are only permitted on full devices, and not on
+  // partitions.
+  message Device {
+    optional int64 major = 1;
+    optional int64 minor = 2;
+  }
+
+  enum OpType {
+    READ = 1;
+    WRITE = 2;
+  }
+
+  enum LimitType {
+    // IOs can be limited by iops or bytes.
+    BYTES_PER_SECOND = 1;
+    IO_PER_SECOND = 2;
+  }
+
+  // Limits and thresholds only work with cfq scheduler.
+  // TODO(jnagal): Handle cases where the requested device is not setup to use
+  // cfq. Fail the request, or switch to cfq dynamically.
+  message DeviceLimit {
+    optional Device device = 1;
+    // limit is the desired fraction of device I/O time between 1 and 100.
+    // When used to express max limit, it can be bytes per second or iops
+    // per second, depending on the limit type.
+    optional uint64 limit = 2;
+  }
+
+  message DeviceLimitSet {
+    // Default weight applied to all devices.
+    optional uint32 default_limit = 1;
+    // Per-device weight overrides.
+    repeated DeviceLimit device_limits = 2;
+  }
+
+  message MaxLimit {
+    repeated DeviceLimit limits = 1;
+    optional OpType op_type = 2;
+    optional LimitType limit_type = 3;
+  }
+
+  message MaxLimitSet {
+    repeated MaxLimit max_limits = 1;
+  }
+
+  // Per-device overrides for the weight setting.
+  optional DeviceLimitSet device_limit_set = 1;
+  // Max allowed limits on each device. Thresholds can be applied on number of
+  // iops and bytes per second. Limits for read and write operations are
+  // specified separately.
+  optional MaxLimitSet max_device_limit_set = 2;
+}
+
+message NetworkSpec {
+}
+
+message MonitoringSpec {
+  // UNIMPLEMENTED
+  optional bool enable_perf_counters = 1;
+}
+
+message FilesystemSpec {
+  // UNIMPLEMENTED
+  optional uint64 fd_limit = 1;
+  // Path to root file filesystem. The container's root filesystem will point to
+  // this path.
+  // As of now, this option is supported only when a VirtualHost is specified.
+  optional string rootfs = 2;
+  // A set of file system entities that needs to be made available inside the
+  // Container.
+  // This option is supported only when a VirtualHost is specified.
+  // UNIMPLEMENTED.
+  optional Mounts mounts = 3;
+}
+
+message DeviceSpec {
+  // Controls devices that are allowed to be accessible inside a container.
+  // root container has all devices accessible. Child container
+  // inherits its parent's device access setting.
+  // A typical pattern is to add a rule to deny all device access and add
+  // the ones that are required by the container.
+  enum DeviceType {
+    // Character device.
+    DEVICE_CHAR = 0;
+    // Block device.
+    DEVICE_BLOCK = 1;
+    // All device types.
+    // When DEVICE_ALL is specified, access type is ignored and all devices
+    // are either denied or allowed depending on the permission.
+    DEVICE_ALL = 2;
+  }
+
+  enum DeviceAccess {
+    // Access type can be any combination of read, write, and mknod.
+    READ = 1;
+    WRITE = 2;
+    MKNOD = 3;
+  }
+
+  enum DevicePermission {
+    // Permission for a device can either be allowed or denied inside
+    // a container.
+    ALLOW = 1;
+    DENY = 2;
+  }
+
+  message DeviceRestrictions {
+    optional DevicePermission permission = 1;
+    optional DeviceType type = 2;
+    repeated DeviceAccess access = 3;
+    // Missing major/minor number implies any device.
+    optional int64 major = 4;
+    optional int64 minor = 5;
+  }
+
+  message DeviceRestrictionsSet {
+    repeated DeviceRestrictions restrictions = 1;
+  }
+
+  optional DeviceRestrictionsSet restrictions_set = 1;
+}
+
+// Security spec for the container.
+//
+// We will support multiple security mechanisms in SecuritySpec. Notice that
+// only one mechanism is effective at a time.
+message SecuritySpec {
+
+  message AppArmorProfile {
+    // AppArmor's profiles live in /etc/apparmor.d/ and are loaded by the
+    // Apparmor kernel modules at system initialization. Process could apply
+    // these profiles by calling aa_change_onexec(2). Notice that AppArmor
+    // refers to profiles through the 'name' field defined in the profile file
+    // instead of the path to the profile file.
+    //
+    // This is a required field.
+    optional string name = 1;
+  }
+
+  // UNIMPLEMENTED.
+  optional AppArmorProfile apparmor_profile = 1;
+}
+
+// Statistics for a Container and its resource usage.
+message ContainerStats {
+  // Commonly used resources
+  optional CpuStats cpu = 1;
+  optional MemoryStats memory = 2;
+  optional NetworkStats network = 4;
+  optional BlockIoStats blockio = 7;
+
+  optional MonitoringStats monitoring = 5;
+  optional FilesystemStats filesystem = 6;
+  // Next ID : 8
+}
+
+// Type of scheduling histograms exported by kernel.
+enum CpuHistogramType {
+  // Total amount of time a task is runnable.
+  SERVE = 1;
+
+  // Amount of time a task is scheduled on a cpu in a single stretch.
+  ONCPU = 2;
+
+  // Amount of time a task is sleeping or blocking.
+  SLEEP = 3;
+
+  // Amount of time waiting in runnable state behind a task from the same
+  // cgroup.
+  QUEUE_SELF = 4;
+
+  // Amount of time waiting in runnable state behind a task from a different
+  // cgroup.
+  QUEUE_OTHER = 5;
+};
+
+message HistogramMap {
+  message Bucket {
+    required int32 bucket = 1;
+    required int64 value = 2;
+  }
+
+  required CpuHistogramType type = 1;
+  repeated Bucket stat = 2;
+}
+
+message ThrottlingData {
+  // Number of periods with throttling active.
+  optional int64 periods = 1;
+
+  // Number of periods when the container hit its throttling limit.
+  optional int64 throttled_periods = 2;
+
+  // Aggregate time the container was throttled for.
+  // Units: nanoseconds.
+  optional int64 throttled_time = 3;
+}
+
+message CpuStats {
+  message Usage {
+    // CPU usage.
+    // Units: nanoseconds.
+    optional uint64 total = 1;
+
+    // CPU usage per cpu.
+    // Units: nanoseconds
+    repeated int64 per_cpu = 2;
+
+    // Time spent by tasks of the cgroup in user mode.
+    // Units: microseconds
+    optional int64 user = 3;
+
+    // Time spent by tasks of the cgroup in kernel mode.
+    // Units: microseconds
+    optional int64 system = 4;
+  }
+  optional Usage usage = 1;
+
+  // CPU load, average number of runnable threads.
+  optional int32 load = 2;
+
+  // CPU throttling stats.
+  optional ThrottlingData throttling_data = 3;
+
+  // CPU scheduling histograms.
+  repeated HistogramMap histograms = 4;
+}
+
+message MemoryStats {
+  // Memory limit, equivalent to "limit" in MemorySpec.
+  // Units: Bytes.
+  optional int64 limit = 1;
+
+  // Effective memory limit, this may be different from "limit" above if the
+  // parent has less than "limit" memory available.
+  // Units: Bytes.
+  optional int64 effective_limit = 2;
+
+  // Reserved memory.
+  // Units: Bytes.
+  optional int64 reservation = 3;
+
+  // Usage statistics.
+
+  // Current memory usage, this includes all memory regardless of when it was
+  // accessed.
+  // Units: Bytes.
+  optional int64 usage = 4;
+
+  // Max memory usage observed in container's lifetime.
+  // Units: Bytes.
+  optional int64 max_usage = 5;
+
+  // The amount of working set memory, this includes recently accessed memory,
+  // dirty memory, and kernel memmory. Working set is <= "usage".
+  // Units: Bytes.
+  optional int64 working_set = 6;
+
+  message MemoryData {
+    optional int64 cache = 1;
+    optional int64 rss = 2;
+    optional int64 rss_huge = 3;
+    optional int64 mapped_file = 4;
+    optional int64 pgpgin = 5;
+    optional int64 pgpgout = 6;
+    optional int64 pgfault = 7;
+    optional int64 pgmajfault = 8;
+    optional int64 dirty = 9;
+    optional int64 writeback = 10;
+    optional int64 inactive_anon = 11;
+    optional int64 active_anon = 12;
+    optional int64 inactive_file = 13;
+    optional int64 active_file = 14;
+    optional int64 unevictable = 15;
+    message THP {
+      optional int64 fault_alloc = 1;
+      optional int64 fault_fallback = 2;
+      optional int64 collapse_alloc = 3;
+      optional int64 collapse_alloc_failed = 4;
+      optional int64 split = 5;
+    }
+    optional THP thp = 16;
+    message Kernel {
+      optional int64 memory = 1;
+      optional int64 slab_memory = 2;
+      optional int64 stack_memory = 3;
+      optional int64 pgtable_memory = 4;
+      optional int64 vmalloc_memory = 5;
+      optional int64 misc_memory = 6;
+      optional int64 targeted_slab_memory = 7;
+      optional int64 compressed_memory = 8;
+    }
+    optional Kernel kernel = 17;
+    optional Kernel kernel_noncharged = 18;
+
+    optional int64 compressed_pool_pages = 19;
+    optional int64 compressed_stored_pages = 20;
+    optional int64 compressed_reject_compress_poor = 21;
+    optional int64 zswap_zsmalloc_fail = 22;
+    optional int64 zswap_kmemcache_fail = 23;
+    optional int64 zswap_duplicate_entry = 24;
+    optional int64 zswap_compressed_pages = 25;
+    optional int64 zswap_decompressed_pages = 26;
+    optional int64 zswap_compression_nsec = 27;
+    optional int64 zswap_decompression_nsec = 28;
+  }
+  // Stats about memory specific to this container
+  optional MemoryData container_data = 7;
+  // Stats about memory for this container and all of its subcontainers
+  optional MemoryData hierarchical_data = 8;
+
+  optional int64 hierarchical_memory_limit = 9;
+
+  message NumaStats {
+    message NumaData {
+      message Stat {
+        message Node {
+          optional int32 level = 1;
+          optional int64 page_count = 2;
+        }
+        repeated Node node = 1;
+        optional int64 total_page_count = 2;
+      }
+      optional Stat total = 1;
+      optional Stat file = 2;
+      optional Stat anon = 3;
+      optional Stat unevictable = 4;
+    }
+    optional NumaData container_data = 1;
+    optional NumaData hierarchical_data = 2;
+  }
+  optional NumaStats numa = 10;
+
+  message IdlePageStats {
+    message Stats {
+      optional int32 age_in_secs = 1;
+      optional int64 clean = 2;
+      optional int64 dirty_file = 3;
+      optional int64 dirty_swap = 4;
+    }
+    repeated Stats stats = 1;
+    optional int64 scans = 2;
+    optional int64 stale = 3;
+  }
+  optional IdlePageStats idle_page = 11;
+
+  message CompressionSamplingStats {
+    optional int64 raw_size = 1;
+    optional int64 compressed_size = 2;
+    optional int64 fifo_overflow = 3;
+  }
+  optional CompressionSamplingStats compression_sampling = 12;
+
+  optional int64 fail_count = 13;
+}
+
+
+message BlockIoStats {
+}
+
+message NetworkStats {
+}
+
+message MonitoringStats {
+}
+
+message FilesystemStats {
+  // Number of fds in use.
+  optional int64 fd_usage = 1;
+
+  // Max fd usage observed in container's lifetime.
+  optional int64 fd_max_usage = 2;
+
+  // Number of times container failed to get an fd because it hit the limit.
+  optional int64 fd_fail_count = 3;
+}
