@@ -1,17 +1,34 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-find_package(PythonLibs)
+# include local CMake modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+
+option(BUILD_PYTHON_BINDINGS "Build python bindings for S2 Geometry Library" ON)
+option(USE_CLANG "Build with clang compiler" OFF)
+
+find_package(PythonLibrary)
 find_package(Boost 1.58.0 COMPONENTS python3)
 find_package(OpenSSL)
 
-# set(CMAKE_CXX_COMPILER /usr/bin/clang++)
-# set(CMAKE_C_COMPILER /usr/bin/clang)
+if (USE_CLANG)
+	message("---------")
+	message("Using clang / clang++ compiler")
+	message("---------")
+	set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+	set(CMAKE_C_COMPILER /usr/bin/clang)
 
-set(LMCTIFY_SRC "thirdparty/lmctify-0.5.0")
+	# Clang warns about struct/class tag mismatch, but as long as this is
+	# not a problem on Windows, these mismatches can be ignored
+	# http://stackoverflow.com/questions/4866425/mixing-class-and-struct. W
+	# warning so it doesn't become an error.
+    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-mismatched-tags")
+endif(USE_CLANG)
+
+set(LMCTFY_SRC "thirdparty/lmctfy-0.5.0")
 
 include_directories(geometry)
-include_directories(${LMCTIFY_SRC})
+include_directories(${LMCTFY_SRC})
 
 add_definitions(-DNDEBUG -DS2_USE_EXACTFLOAT -DARCH_K8)
 add_definitions(-std=c++0x) 
@@ -62,13 +79,13 @@ add_library(google_util_math SHARED
 )
 
 ######################
-# Build lmctify
+# Build lmctfy
 ######################
 
 
-file(GLOB lmctify_cpp "${LMCTIFY_SRC}/base/*.cc" "${LMCTIFY_SRC}/strings/*.cc" "${LMCTIFY_SRC}/util/utf/*.cc")
-add_library(lmctify SHARED
-	${lmctify_cpp}
+file(GLOB lmctfy_cpp "${LMCTFY_SRC}/base/*.cc" "${LMCTFY_SRC}/strings/*.cc" "${LMCTFY_SRC}/util/utf/*.cc")
+add_library(lmctfy SHARED
+	${lmctfy_cpp}
 )
 
 message("Python:  ${PYTHONLIBS_FOUND}")
@@ -78,7 +95,7 @@ message("OpenSSL: ${OPENSSL_FOUND}")
 ########################
 # Build Python Bindings
 ########################
-if (PYTHONLIBS_FOUND AND Boost_FOUND)
+if (PYTHONLIBS_FOUND AND Boost_FOUND AND BUILD_PYTHON_BINDINGS)
 	string(REPLACE "." ";" VERSION_LIST ${PYTHONLIBS_VERSION_STRING})
 	list(GET VERSION_LIST 0 PYTHON_VERSION_MAJOR)
 	list(GET VERSION_LIST 1 PYTHON_VERSION_MINOR)
@@ -88,6 +105,7 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND)
 	message("PythonLibs: (${PYTHON_VERSION_STRING})")
 	message("  inc: ${PYTHON_INCLUDE_DIRS}")
 	message("  lib: ${PYTHON_LIBRARIES}")
+	message("  site: ${PYTHON_SITE_PACKAGES_INSTALL_DIR}")
 	message("----------")
 	message("Boost: (${Boost_VERSION})")
 	message("  inc: ${Boost_INCLUDE_DIRS}")
@@ -110,7 +128,7 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND)
 		${PYTHON_LIBRARIES} 
 		${Boost_LIBRARIES} 
 		${OPENSSL_LIBRARIES}
-		lmctify
+		lmctfy
 		google_util_geometry_s2
 		google_util_geometry_s2cellid
 		google_util_coding
@@ -122,18 +140,18 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND)
 	geometry_s2
 
 	DESTINATION
-	lib/python${PYTHON_VERSION_STRING}/site-packages
+	${PYTHON_SITE_PACKAGES_INSTALL_DIR}
 	)
 
-endif (PYTHONLIBS_FOUND AND Boost_FOUND)
+endif (PYTHONLIBS_FOUND AND Boost_FOUND AND BUILD_PYTHON_BINDINGS)
 
 install(TARGETS
-	lmctify
+	lmctfy
 	google_util_geometry_s2cellid
 	google_util_geometry_s2
 	google_util_coding
 	google_util_math
 	
 	DESTINATION 
-	lib
+	${PYTHON_SITE_PACKAGES_INSTALL_DIR}
 )
