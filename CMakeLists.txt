@@ -1,15 +1,20 @@
 
 cmake_minimum_required(VERSION 2.8)
 
+include(GNUInstallDirs)
+
 # include local CMake modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 option(BUILD_PYTHON_BINDINGS "Build python bindings for S2 Geometry Library" ON)
 option(USE_CLANG "Build with clang compiler" OFF)
 
-find_package(PythonLibrary)
+# find_package(PythonLibrary)
 find_package(Boost 1.58.0 COMPONENTS python3)
 find_package(OpenSSL)
+
+find_package(PythonInterp)
+find_package(PythonLibs)
 
 if (USE_CLANG)
 	message("---------")
@@ -88,9 +93,9 @@ add_library(lmctfy SHARED
 	${lmctfy_cpp}
 )
 
-message("Python:  ${PYTHONLIBS_FOUND}")
-message("Boost:   ${Boost_FOUND}")
-message("OpenSSL: ${OPENSSL_FOUND}")
+message("Python Found:  ${PYTHONLIBS_FOUND}")
+message("Boost Found:   ${Boost_FOUND}")
+message("OpenSSL Found: ${OPENSSL_FOUND}")
 
 ########################
 # Build Python Bindings
@@ -101,19 +106,25 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND AND BUILD_PYTHON_BINDINGS)
 	list(GET VERSION_LIST 1 PYTHON_VERSION_MINOR)
 	set(PYTHON_VERSION_STRING "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
 
+	# Auto detect Python site-packages directory
+    execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(True,prefix='${CMAKE_INSTALL_PREFIX}'))"
+                    OUTPUT_VARIABLE PYTHON_SITE_PACKAGES_DIR
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                   )
+
 	message("----------")
 	message("PythonLibs: (${PYTHON_VERSION_STRING})")
-	message("  inc: ${PYTHON_INCLUDE_DIRS}")
-	message("  lib: ${PYTHON_LIBRARIES}")
-	message("  site: ${PYTHON_SITE_PACKAGES_INSTALL_DIR}")
+	message("  inc:  ${PYTHON_INCLUDE_DIRS}")
+	message("  lib:  ${PYTHON_LIBRARIES}")
+	message("  site: ${PYTHON_SITE_PACKAGES_DIR}")
 	message("----------")
 	message("Boost: (${Boost_VERSION})")
-	message("  inc: ${Boost_INCLUDE_DIRS}")
-	message("  lib: ${Boost_LIBRARIES}")
+	message("  inc:  ${Boost_INCLUDE_DIRS}")
+	message("  lib:  ${Boost_LIBRARIES}")
 	message("----------")
 	message("OpenSSL: (${OPENSSL_VERSION})")
-	message("  inc: ${OPENSSL_INCLUDE_DIRS}")
-	message("  lib: ${OPENSSL_LIBRARIES}")
+	message("  inc:  ${OPENSSL_INCLUDE_DIRS}")
+	message("  lib:  ${OPENSSL_LIBRARIES}")
 	message("----------")
 
 	include_directories(${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
@@ -125,8 +136,8 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND AND BUILD_PYTHON_BINDINGS)
 	)
 	set_target_properties(geometry_s2 PROPERTIES PREFIX "")
 	target_link_libraries(geometry_s2 
-		${PYTHON_LIBRARIES} 
-		${Boost_LIBRARIES} 
+		${PYTHON_LIBRARIES}
+		${Boost_LIBRARIES}
 		${OPENSSL_LIBRARIES}
 		lmctfy
 		google_util_geometry_s2
@@ -140,10 +151,15 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND AND BUILD_PYTHON_BINDINGS)
 	geometry_s2
 
 	DESTINATION
-	${PYTHON_SITE_PACKAGES_INSTALL_DIR}
+	${PYTHON_SITE_PACKAGES_DIR}
 	)
 
 endif (PYTHONLIBS_FOUND AND Boost_FOUND AND BUILD_PYTHON_BINDINGS)
+
+message("----------")
+message("Install:")
+message("  libs: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+message("----------")
 
 install(TARGETS
 	lmctfy
@@ -153,5 +169,5 @@ install(TARGETS
 	google_util_math
 	
 	DESTINATION 
-	${PYTHON_SITE_PACKAGES_INSTALL_DIR}
+	${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
 )

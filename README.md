@@ -6,7 +6,7 @@ This method is useful for building/installing into a Python Virtual Environment.
 
     mkdir build
     cd build
-    cmake .. -DINSTALL_PYTHON_FILES_IN_PYTHON_PREFIX=ON -DBUILD_PYTHON_BINDINGS=ON
+    cmake .. -DBUILD_PYTHON_BINDINGS=ON -DCMAKE_INSTALL_PREFIX=/usr/local
     make install
 
 ## Build Python bindings and install into the install prefix
@@ -14,7 +14,7 @@ This method is useful is you want to build/install into a custom managed locatio
 
     mkdir build
     cd build
-    cmake .. -DINSTALL_PYTHON_FILES_IN_PYTHON_PREFIX=OFF -DBUILD_PYTHON_BINDINGS=ON -DCMAKE_INSTALL_PREFIX=$HOME/local/s2
+    cmake .. -DBUILD_PYTHON_BINDINGS=ON -DCMAKE_INSTALL_PREFIX=/usr/local
     make install
 
 ## Build options
