@@ -6,6 +6,7 @@
 #include <s2region.h>
 #include <s2cellid.h>
 #include <s2cell.h>
+#include <s2latlngrect.h>
 
 using namespace boost::python;
 
@@ -47,7 +48,14 @@ BOOST_PYTHON_MODULE(geometry_s2)
         
     ;
 
+    
+    bool (S2LatLngRect::*intersects_cell)(S2Cell const&) const = &S2LatLngRect::Intersects;
 
+    class_<S2LatLngRect>("S2LatLngRect", init<>())
+        .def(init<S2LatLng, S2LatLng>())
 
+        .def("intersects_cell", intersects_cell)
+        .def("area", &S2LatLngRect::Area)
+    ;
 }
 
