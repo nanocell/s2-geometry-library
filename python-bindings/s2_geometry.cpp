@@ -1,14 +1,51 @@
 
+#include <vector>
+
 #include <boost/python.hpp>
+#include <boost/python/list.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <s1angle.h>
 #include <s2latlng.h>
 #include <s2region.h>
 #include <s2cellid.h>
 #include <s2cell.h>
+#include <s2cellunion.h>
 #include <s2latlngrect.h>
 
+
 using namespace boost::python;
+
+void s2cellunion__init_from_cell_ids__wrapper(S2CellUnion* c, boost::python::list pylist)
+{
+    std::vector<S2CellId> v;
+    for (int i = 0; i < len(pylist); ++i)
+    {
+        v.push_back( boost::python::extract<S2CellId>(pylist[i]) );
+    }
+
+    c->Init(v);
+}
+
+
+
+boost::python::list s2cellunion__cell_ids__wrapper(S2CellUnion* c)
+{
+    const std::vector<S2CellId>& cellids = c->cell_ids();
+
+    std::vector<S2CellId>::const_iterator it;
+    boost::python::list l;
+
+    for (it = cellids.begin(); it != cellids.end(); ++it)
+    {
+        l.append(*it);
+    }
+
+    // boost::python::object get_iter = boost::python::iterator<std::vector<S2CellId> >();
+    // boost::python::object iter = get_iter(cellids);
+    
+    return l;
+}
 
 BOOST_PYTHON_MODULE(s2_geometry)
 {
@@ -37,7 +74,19 @@ BOOST_PYTHON_MODULE(s2_geometry)
     class_<S2CellId>("S2CellId", init<>())
         .def(init<uint64>())
 
+        .def("child_begin",       static_cast<S2CellId (S2CellId::*)() const>(&S2CellId::child_begin))
+        .def("child_begin_level", static_cast<S2CellId (S2CellId::*)(int) const>(&S2CellId::child_begin))
+        .def("child_end",         static_cast<S2CellId (S2CellId::*)() const>(&S2CellId::child_end))
+        .def("child_end_level",   static_cast<S2CellId (S2CellId::*)(int) const>(&S2CellId::child_end))
+
+        .def("next", &S2CellId::next)
+        .def("prev", &S2CellId::prev)
+
+        .def("Begin", &S2CellId::Begin)
+        .def("End", &S2CellId::End)
+
         .def("id", &S2CellId::id)
+        .def("is_leaf", &S2CellId::is_leaf)
     ;
 
     class_<S2Cell>("S2Cell", init<S2CellId>())
@@ -47,6 +96,13 @@ BOOST_PYTHON_MODULE(s2_geometry)
         .def("id", &S2Cell::id)
         .def("get_vertex", &S2Cell::GetVertex)        
         .def("get_center", &S2Cell::GetCenter)
+    ;
+
+    class_<S2CellUnion, boost::noncopyable>("S2CellUnion")
+        // .def("init_from_cell_ids", static_cast<void (S2CellUnion::*)(std::vector<S2CellId> const&)>(&S2CellUnion::Init))
+        .def("init_from_cell_ids", &s2cellunion__init_from_cell_ids__wrapper)
+        .def("num_cells", &S2CellUnion::num_cells)
+        .def("cell_ids", s2cellunion__cell_ids__wrapper)
     ;
 
     class_<S2Point>("S2Point")
