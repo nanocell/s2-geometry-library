@@ -130,12 +130,12 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND AND BUILD_PYTHON_BINDINGS)
 	include_directories(${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
 
 	# Python Bindings for geometry_s2 library
-	file(GLOB geometry_s2_py_cpp "python-bindings/*.cpp")
-	add_library(geometry_s2 SHARED
-		${geometry_s2_py_cpp}
+	file(GLOB s2_geometry_py_cpp "python-bindings/*.cpp")
+	add_library(s2_geometry SHARED
+		${s2_geometry_py_cpp}
 	)
-	set_target_properties(geometry_s2 PROPERTIES PREFIX "")
-	target_link_libraries(geometry_s2 
+	set_target_properties(s2_geometry PROPERTIES PREFIX "")
+	target_link_libraries(s2_geometry 
 		${PYTHON_LIBRARIES}
 		${Boost_LIBRARIES}
 		${OPENSSL_LIBRARIES}
@@ -148,7 +148,7 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND AND BUILD_PYTHON_BINDINGS)
 	)
 
 	install(TARGETS
-	geometry_s2
+	s2_geometry
 
 	DESTINATION
 	${PYTHON_SITE_PACKAGES_DIR}

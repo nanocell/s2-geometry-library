@@ -26,4 +26,4 @@ This method is useful is you want to build/install into a custom managed locatio
 
 ## Testing Python Bindings
 
-    python -c 'import geometry_s2 as s2; print(s2.S2LatLng( s2.S1Angle.Degrees(180), s2.S1Angle.Degrees(15) ))'
+    python -c 'import s2_geometry as s2; print(s2.S2LatLng( s2.S1Angle.Degrees(180), s2.S1Angle.Degrees(15) ))'

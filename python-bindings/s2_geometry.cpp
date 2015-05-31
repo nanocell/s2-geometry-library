@@ -10,7 +10,7 @@
 
 using namespace boost::python;
 
-BOOST_PYTHON_MODULE(geometry_s2)
+BOOST_PYTHON_MODULE(s2_geometry)
 {
     class_<S1Angle>("S1Angle")
         .def("Degrees", &S1Angle::Degrees)
@@ -45,7 +45,14 @@ BOOST_PYTHON_MODULE(geometry_s2)
         .def(init<S2LatLng>())
 
         .def("id", &S2Cell::id)
-        
+        .def("get_vertex", &S2Cell::GetVertex)        
+        .def("get_center", &S2Cell::GetCenter)
+    ;
+
+    class_<S2Point>("S2Point")
+        .def("x", static_cast<S2Point::BaseType (S2Point::*)() const>(&S2Point::x))
+        .def("y", static_cast<S2Point::BaseType (S2Point::*)() const>(&S2Point::y))
+        .def("z", static_cast<S2Point::BaseType (S2Point::*)() const>(&S2Point::z))
     ;
 
     
