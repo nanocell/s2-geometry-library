@@ -17,6 +17,14 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
+#if defined __APPLE__
+
+pid_t GetTID() { return 0; }
+
+#else
+
 pid_t GetTID() {
   return syscall(__NR_gettid);
 }
+
+#endif
