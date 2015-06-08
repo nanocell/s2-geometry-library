@@ -51,6 +51,7 @@ add_library(google_util_coding
 	geometry/util/coding/coder.cc
 	geometry/util/coding/varint.cc	
 )
+target_link_libraries(google_util_coding lmctfy)
 
 file(GLOB s2_geometry_cpp "geometry/strings/*.cc")
 add_library(google_util_geometry_s2 
