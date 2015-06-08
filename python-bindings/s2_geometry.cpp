@@ -87,6 +87,9 @@ BOOST_PYTHON_MODULE(s2_geometry)
 
         .def("id", &S2CellId::id)
         .def("is_leaf", &S2CellId::is_leaf)
+
+        .def("range_min", &S2CellId::range_min)
+        .def("range_max", &S2CellId::range_max)
     ;
 
     class_<S2Cell>("S2Cell", init<S2CellId>())
