@@ -58,14 +58,14 @@ using namespace __gnu_cxx;
 #include "base/logging.h"  // for CHECK
 #include "base/strtoint.h"
 #include "base/int128.h"
-#include "ascii_ctype.h"
+#include "strings/ascii_ctype.h"
 //#include "charset.h"
 //#include "escaping.h"
 //#include "host_port.h"
 #include "base/stringprintf.h"
 #include "base/stl_decl.h"
 #include "base/port.h"
-#include "endian.h"
+#include "util/endian/endian.h"
 
 // ----------------------------------------------------------------------
 // FpToString()
