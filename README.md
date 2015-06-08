@@ -3,6 +3,11 @@
 
 ## Building S2 Geometry Library with Python Bindings
 
+### Tested on:
+
+- OSX Yosemite (10.10.3), gcc-5.1.0
+- ArchLinux 64bit, gcc-5.1.0
+
 ### Build Python bindings and install into the python prefix
 This method is useful for building/installing into a Python Virtual Environment.
 

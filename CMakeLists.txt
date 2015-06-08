@@ -38,23 +38,68 @@ include_directories(${LMCTFY_SRC})
 add_definitions(-DNDEBUG -DS2_USE_EXACTFLOAT -DARCH_K8)
 add_definitions(-std=c++0x) 
 
-add_library(google_util_geometry_s2cellid 
+# add_library(google_util_geometry_s2cellid 
+# 	SHARED
+# 	geometry/s1angle.cc
+# 	geometry/s2.cc
+# 	geometry/s2cellid.cc
+# 	geometry/s2latlng.cc
+# )
+
+# add_library(google_util_coding 
+# 	SHARED
+# 	geometry/util/coding/coder.cc
+# 	geometry/util/coding/varint.cc	
+# )
+# target_link_libraries(google_util_coding lmctfy)
+
+# file(GLOB s2_geometry_cpp "geometry/strings/*.cc")
+# add_library(google_util_geometry_s2 
+# 	SHARED
+# 	geometry/s1interval.cc
+# 	geometry/s2cap.cc
+# 	geometry/s2cell.cc
+# 	geometry/s2cellunion.cc
+# 	geometry/s2edgeindex.cc
+# 	geometry/s2edgeutil.cc
+# 	geometry/s2latlngrect.cc
+# 	geometry/s2loop.cc
+# 	geometry/s2pointregion.cc
+# 	geometry/s2polygon.cc
+# 	geometry/s2polygonbuilder.cc
+# 	geometry/s2polyline.cc
+# 	geometry/s2r2rect.cc
+# 	geometry/s2region.cc
+# 	geometry/s2regioncoverer.cc
+# 	geometry/s2regionintersection.cc
+# 	geometry/s2regionunion.cc
+
+# 	${s2_geometry_cpp}
+# )
+# target_link_libraries(google_util_geometry_s2 lmctfy)
+
+# add_library(google_util_math SHARED
+# 	geometry/util/math/mathutil.cc
+# 	geometry/util/math/mathlimits.cc
+# 	geometry/util/math/exactfloat/exactfloat.cc
+# )
+
+file(GLOB s2_geometry_cpp "geometry/strings/*.cc")
+add_library(s2_geometry 
 	SHARED
+	
+	geometry/util/coding/coder.cc
+	geometry/util/coding/varint.cc	
+
+	geometry/util/math/mathutil.cc
+	geometry/util/math/mathlimits.cc
+	geometry/util/math/exactfloat/exactfloat.cc
+
 	geometry/s1angle.cc
 	geometry/s2.cc
 	geometry/s2cellid.cc
 	geometry/s2latlng.cc
-)
 
-add_library(google_util_coding 
-	SHARED
-	geometry/util/coding/coder.cc
-	geometry/util/coding/varint.cc	
-)
-
-file(GLOB s2_geometry_cpp "geometry/strings/*.cc")
-add_library(google_util_geometry_s2 
-	SHARED
 	geometry/s1interval.cc
 	geometry/s2cap.cc
 	geometry/s2cell.cc
@@ -75,13 +120,7 @@ add_library(google_util_geometry_s2
 
 	${s2_geometry_cpp}
 )
-
-
-add_library(google_util_math SHARED
-	geometry/util/math/mathutil.cc
-	geometry/util/math/mathlimits.cc
-	geometry/util/math/exactfloat/exactfloat.cc
-)
+target_link_libraries(s2_geometry lmctfy ${OPENSSL_LIBRARIES})
 
 ######################
 # Build lmctfy
@@ -94,7 +133,7 @@ add_library(lmctfy SHARED
 )
 
 message("Python Found:  ${PYTHONLIBS_FOUND}")
-message("Boost Found:   ${Boost_FOUND}")
+message("Boost Python Found:   ${Boost_FOUND}")
 message("OpenSSL Found: ${OPENSSL_FOUND}")
 
 ########################
@@ -131,24 +170,25 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND AND BUILD_PYTHON_BINDINGS)
 
 	# Python Bindings for geometry_s2 library
 	file(GLOB s2_geometry_py_cpp "python-bindings/*.cpp")
-	add_library(s2_geometry SHARED
+	add_library(s2_geometry_py SHARED
 		${s2_geometry_py_cpp}
 	)
-	set_target_properties(s2_geometry PROPERTIES PREFIX "")
-	target_link_libraries(s2_geometry 
+	set_target_properties(s2_geometry_py PROPERTIES PREFIX "")
+	target_link_libraries(s2_geometry_py 
 		${PYTHON_LIBRARIES}
 		${Boost_LIBRARIES}
 		${OPENSSL_LIBRARIES}
 		lmctfy
-		google_util_geometry_s2
-		google_util_geometry_s2cellid
-		google_util_coding
-		google_util_math
+		s2_geometry
+		# google_util_geometry_s2
+		# google_util_geometry_s2cellid
+		# google_util_coding
+		# google_util_math
 		z
 	)
 
 	install(TARGETS
-	s2_geometry
+	s2_geometry_py
 
 	DESTINATION
 	${PYTHON_SITE_PACKAGES_DIR}
@@ -163,10 +203,7 @@ message("----------")
 
 install(TARGETS
 	lmctfy
-	google_util_geometry_s2cellid
-	google_util_geometry_s2
-	google_util_coding
-	google_util_math
+	s2_geometry
 	
 	DESTINATION 
 	${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
