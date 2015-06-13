@@ -49,12 +49,13 @@ boost::python::list s2cellunion__cell_ids__wrapper(S2CellUnion* c)
 
 BOOST_PYTHON_MODULE(s2_geometry)
 {
-    class_<S1Angle>("S1Angle")
+    class_<S1Angle>("S1Angle", init<>())
         .def("Degrees", &S1Angle::Degrees)
         .def("Radians", &S1Angle::Radians)
         
         .def("radians", &S1Angle::radians)
         .def("degrees", &S1Angle::degrees)
+
         // .def("set", &World::set)
     ;
 

@@ -9,8 +9,14 @@ using std::max;
 using std::swap;
 using std::reverse;
 
+#if defined __GNUC__ || defined __APPLE__
+#include <ext/hash_map>
+#else
 #include <hash_map>
+#endif
+
 using __gnu_cxx::hash_map;
+
   // To have template struct hash<T> defined
 #include "base/basictypes.h"
 #include "base/logging.h"
@@ -28,7 +34,6 @@ using __gnu_cxx::hash_map;
 // arithmetic expressions (e.g. (1-x)*p1 + x*p2).
 typedef Vector3_d S2Point;
 
-#include<hash_set>
 namespace __gnu_cxx {
 
 

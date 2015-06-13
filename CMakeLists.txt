@@ -36,7 +36,29 @@ include_directories(geometry)
 include_directories(${LMCTFY_SRC})
 
 add_definitions(-DNDEBUG -DS2_USE_EXACTFLOAT -DARCH_K8)
-add_definitions(-std=c++0x) 
+
+
+# http://stackoverflow.com/questions/10046114/in-cmake-how-can-i-test-if-the-compiler-is-clang
+# http://stackoverflow.com/questions/19774778/when-is-it-necessary-to-use-use-the-flag-stdlib-libstdc
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+	# using Clang
+  if(APPLE)
+  	# TODO: Check that we're running >=Mavericks
+  	add_definitions(-std=c++11)
+  elseif(UNIX)
+  	add_definitions(-std=c++11)
+  endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  # using GCC
+  add_definitions(-std=c++11)
+  if (APPLE)
+  	# add_definitions(-lc++)
+  endif(APPLE)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  # using Intel C++
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+  # using Visual Studio C++
+endif()
 
 # add_library(google_util_geometry_s2cellid 
 # 	SHARED
@@ -132,7 +154,7 @@ add_library(lmctfy SHARED
 	${lmctfy_cpp}
 )
 
-message("Python Found:  ${PYTHONLIBS_FOUND}")
+message("Python Found:  ${PYTHONLIBS_FOUND} - ${PYTHONLIBS_VERSION_STRING}")
 message("Boost Python Found:   ${Boost_FOUND}")
 message("OpenSSL Found: ${OPENSSL_FOUND}")
 
@@ -173,7 +195,14 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND AND BUILD_PYTHON_BINDINGS)
 	add_library(s2_geometry_py SHARED
 		${s2_geometry_py_cpp}
 	)
-	set_target_properties(s2_geometry_py PROPERTIES PREFIX "")
+	set_target_properties(s2_geometry_py 
+		PROPERTIES 
+		PREFIX ""
+		OUTPUT_NAME "s2_geometry")
+	if (APPLE)
+		set_target_properties(s2_geometry_py PROPERTIES SUFFIX ".so")
+	endif(APPLE)
+
 	target_link_libraries(s2_geometry_py 
 		${PYTHON_LIBRARIES}
 		${Boost_LIBRARIES}
