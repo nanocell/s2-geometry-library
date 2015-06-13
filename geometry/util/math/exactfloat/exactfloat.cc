@@ -3,7 +3,7 @@
 #include "util/math/exactfloat/exactfloat.h"
 #include <cstring>
 
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 using std::min;
 using std::max;

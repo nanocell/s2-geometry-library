@@ -6,7 +6,13 @@ using std::max;
 using std::swap;
 using std::reverse;
 
+#if defined __GNUC__ || defined __APPLE__
+#include <ext/hash_map>
+#include <ext/hash_set>
+#else
 #include <hash_map>
+#include <hash_set>
+#endif
 using __gnu_cxx::hash_map;
 
 #include <set>
@@ -111,7 +117,6 @@ S2Polygon::~S2Polygon() {
 
 typedef pair<S2Point, S2Point> S2PointPair;
 
-#include<hash_set>
 namespace __gnu_cxx {
 
 template<> struct hash<S2PointPair> {
