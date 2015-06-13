@@ -53,73 +53,73 @@ BOOST_PYTHON_MODULE(s2_geometry)
         .def("Degrees", &S1Angle::Degrees)
         .def("Radians", &S1Angle::Radians)
         
-        // .def("radians", &S1Angle::radians)
-        // .def("degrees", &S1Angle::degrees)
+        .def("radians", &S1Angle::radians)
+        .def("degrees", &S1Angle::degrees)
 
         // .def("set", &World::set)
     ;
 
-    // class_<S2LatLng>("S2LatLng")
-    // 	.def(init<S1Angle, S1Angle>())
+    class_<S2LatLng>("S2LatLng")
+    	.def(init<S1Angle, S1Angle>())
 
-    //     .def("FromDegrees", &S2LatLng::FromDegrees)
-    //     .def("FromRadians", &S2LatLng::FromRadians)
+        .def("FromDegrees", &S2LatLng::FromDegrees)
+        .def("FromRadians", &S2LatLng::FromRadians)
 
-    //     .def("lat", &S2LatLng::lat)
-    //     .def("lng", &S2LatLng::lng)
+        .def("lat", &S2LatLng::lat)
+        .def("lng", &S2LatLng::lng)
         
-    //     .def("is_valid", &S2LatLng::is_valid)
+        .def("is_valid", &S2LatLng::is_valid)
         
-    // ;
+    ;
 
-    // class_<S2CellId>("S2CellId", init<>())
-    //     .def(init<uint64>())
+    class_<S2CellId>("S2CellId", init<>())
+        .def(init<uint64>())
 
-    //     .def("child_begin",       static_cast<S2CellId (S2CellId::*)() const>(&S2CellId::child_begin))
-    //     .def("child_begin_level", static_cast<S2CellId (S2CellId::*)(int) const>(&S2CellId::child_begin))
-    //     .def("child_end",         static_cast<S2CellId (S2CellId::*)() const>(&S2CellId::child_end))
-    //     .def("child_end_level",   static_cast<S2CellId (S2CellId::*)(int) const>(&S2CellId::child_end))
+        .def("child_begin",       static_cast<S2CellId (S2CellId::*)() const>(&S2CellId::child_begin))
+        .def("child_begin_level", static_cast<S2CellId (S2CellId::*)(int) const>(&S2CellId::child_begin))
+        .def("child_end",         static_cast<S2CellId (S2CellId::*)() const>(&S2CellId::child_end))
+        .def("child_end_level",   static_cast<S2CellId (S2CellId::*)(int) const>(&S2CellId::child_end))
 
-    //     .def("next", &S2CellId::next)
-    //     .def("prev", &S2CellId::prev)
+        .def("next", &S2CellId::next)
+        .def("prev", &S2CellId::prev)
 
-    //     .def("Begin", &S2CellId::Begin)
-    //     .def("End", &S2CellId::End)
+        .def("Begin", &S2CellId::Begin)
+        .def("End", &S2CellId::End)
 
-    //     .def("id", &S2CellId::id)
-    //     .def("is_leaf", &S2CellId::is_leaf)
-    // ;
+        .def("id", &S2CellId::id)
+        .def("is_leaf", &S2CellId::is_leaf)
+    ;
 
-    // class_<S2Cell>("S2Cell", init<S2CellId>())
-    //     // .def(init<S2Point>())
-    //     .def(init<S2LatLng>())
+    class_<S2Cell>("S2Cell", init<S2CellId>())
+        // .def(init<S2Point>())
+        .def(init<S2LatLng>())
 
-    //     .def("id", &S2Cell::id)
-    //     .def("get_vertex", &S2Cell::GetVertex)        
-    //     .def("get_center", &S2Cell::GetCenter)
-    // ;
+        .def("id", &S2Cell::id)
+        .def("get_vertex", &S2Cell::GetVertex)        
+        .def("get_center", &S2Cell::GetCenter)
+    ;
 
-    // class_<S2CellUnion, boost::noncopyable>("S2CellUnion")
-    //     // .def("init_from_cell_ids", static_cast<void (S2CellUnion::*)(std::vector<S2CellId> const&)>(&S2CellUnion::Init))
-    //     .def("init_from_cell_ids", &s2cellunion__init_from_cell_ids__wrapper)
-    //     .def("num_cells", &S2CellUnion::num_cells)
-    //     .def("cell_ids", s2cellunion__cell_ids__wrapper)
-    // ;
+    class_<S2CellUnion, boost::noncopyable>("S2CellUnion")
+        // .def("init_from_cell_ids", static_cast<void (S2CellUnion::*)(std::vector<S2CellId> const&)>(&S2CellUnion::Init))
+        .def("init_from_cell_ids", &s2cellunion__init_from_cell_ids__wrapper)
+        .def("num_cells", &S2CellUnion::num_cells)
+        .def("cell_ids", s2cellunion__cell_ids__wrapper)
+    ;
 
-    // class_<S2Point>("S2Point")
-    //     .def("x", static_cast<S2Point::BaseType (S2Point::*)() const>(&S2Point::x))
-    //     .def("y", static_cast<S2Point::BaseType (S2Point::*)() const>(&S2Point::y))
-    //     .def("z", static_cast<S2Point::BaseType (S2Point::*)() const>(&S2Point::z))
-    // ;
+    class_<S2Point>("S2Point")
+        .def("x", static_cast<S2Point::BaseType (S2Point::*)() const>(&S2Point::x))
+        .def("y", static_cast<S2Point::BaseType (S2Point::*)() const>(&S2Point::y))
+        .def("z", static_cast<S2Point::BaseType (S2Point::*)() const>(&S2Point::z))
+    ;
 
     
-    // bool (S2LatLngRect::*intersects_cell)(S2Cell const&) const = &S2LatLngRect::Intersects;
+    bool (S2LatLngRect::*intersects_cell)(S2Cell const&) const = &S2LatLngRect::Intersects;
 
-    // class_<S2LatLngRect>("S2LatLngRect", init<>())
-    //     .def(init<S2LatLng, S2LatLng>())
+    class_<S2LatLngRect>("S2LatLngRect", init<>())
+        .def(init<S2LatLng, S2LatLng>())
 
-    //     .def("intersects_cell", intersects_cell)
-    //     .def("area", &S2LatLngRect::Area)
-    // ;
+        .def("intersects_cell", intersects_cell)
+        .def("area", &S2LatLngRect::Area)
+    ;
 }
 
