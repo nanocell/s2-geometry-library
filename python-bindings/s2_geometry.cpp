@@ -47,6 +47,13 @@ boost::python::list s2cellunion__cell_ids__wrapper(S2CellUnion* c)
     return l;
 }
 
+// wrapper to convert the unsigned id to a signed value
+// to match the Java S2 Geometry library implementation.
+signed long long get_cell_signed_id(S2CellId& c)
+{
+    return static_cast<signed long long>(c.id());
+}
+
 BOOST_PYTHON_MODULE(s2_geometry)
 {
     class_<S1Angle>("S1Angle", init<>())
@@ -86,8 +93,13 @@ BOOST_PYTHON_MODULE(s2_geometry)
         .def("Begin", &S2CellId::Begin)
         .def("End", &S2CellId::End)
 
-        .def("id", &S2CellId::id)
+        .def("id", &get_cell_signed_id)
+        // .def("id", &S2CellId::id)
         .def("is_leaf", &S2CellId::is_leaf)
+
+        .def("is_valid", &S2CellId::is_valid)
+
+        .def("to_string", &S2CellId::ToString)
 
         .def("range_min", &S2CellId::range_min)
         .def("range_max", &S2CellId::range_max)
@@ -98,6 +110,8 @@ BOOST_PYTHON_MODULE(s2_geometry)
         .def(init<S2LatLng>())
 
         .def("id", &S2Cell::id)
+        
+
         .def("get_vertex", &S2Cell::GetVertex)        
         .def("get_center", &S2Cell::GetCenter)
     ;
@@ -123,6 +137,10 @@ BOOST_PYTHON_MODULE(s2_geometry)
 
         .def("intersects_cell", intersects_cell)
         .def("area", &S2LatLngRect::Area)
+        .def("lat_lo", &S2LatLngRect::lat_lo)
+        .def("lat_hi", &S2LatLngRect::lat_hi)
+        .def("lng_lo", &S2LatLngRect::lng_lo)
+        .def("lng_hi", &S2LatLngRect::lng_hi)
     ;
 }
 
